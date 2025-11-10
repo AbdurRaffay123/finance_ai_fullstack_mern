@@ -13,6 +13,25 @@ interface CategoryModalProps {
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
 }
 
+// Prediction model required categories - must match exactly for predictions to work
+// Based on FastAPI/app.py model inputs:
+// Required: Groceries, Transport, Eating_Out, Entertainment, Utilities, Miscellaneous
+// Optional but recommended: Income, Healthcare, Education, Insurance, Rent, Loan_Repayment
+const PREDICTION_CATEGORIES = [
+  'Income',
+  'Groceries',
+  'Transport',
+  'Eating_Out',
+  'Entertainment',
+  'Utilities',
+  'Miscellaneous',
+  'Healthcare',
+  'Education',
+  'Insurance',
+  'Rent',
+  'Loan_Repayment'
+];
+
 const CategoryModal: React.FC<CategoryModalProps> = ({
   visible,
   categoryId,
@@ -25,11 +44,11 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
   onClose,
   onSubmit,
 }) => {
-  const categoryNameRef = useRef<HTMLInputElement>(null);
+  const categorySelectRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
     if (visible) {
-      categoryNameRef.current?.focus();
+      categorySelectRef.current?.focus();
     }
   }, [visible]);
 
@@ -43,16 +62,29 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
         </h2>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Category Name</label>
-            <input
-              ref={categoryNameRef}
-              type="text"
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-              placeholder="Enter category name"
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Category <span className="text-red-500">*</span>
+              <span className="text-xs text-gray-500 block mt-1 font-normal">
+                Select a category required by the prediction system
+              </span>
+            </label>
+            <select
+              ref={categorySelectRef}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3"
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-            />
+            >
+              <option value="">Select a category</option>
+              {PREDICTION_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat.replace(/_/g, ' ')}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-blue-600 mt-2">
+              💡 These categories are linked to the prediction system. The category name will be used for AI predictions.
+            </p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Color</label>

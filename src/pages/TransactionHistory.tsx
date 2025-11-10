@@ -23,6 +23,12 @@ const TransactionHistory = () => {
       }
       try {
         const response = await api.get('/transactions');
+        console.log('Fetched transactions:', response.data);
+        // Debug: log first transaction to check if description exists
+        if (response.data && response.data.length > 0) {
+          console.log('Sample transaction:', response.data[0]);
+          console.log('Description field:', response.data[0].description);
+        }
         setTransactions(response.data);
       } catch (err) {
         console.error('Error fetching transactions:', err);
@@ -32,7 +38,8 @@ const TransactionHistory = () => {
     fetchTransactions();
   }, []);
 
-  const categories = ['All', 'Food', 'Transport', 'Utilities', 'Entertainment', 'Shopping', 'Income'];
+  // Static categories matching AddTransaction page
+  const categories = ['All', 'Food & Dining', 'Transportation', 'Shopping', 'Entertainment', 'Bills & Utilities', 'Healthcare', 'Education', 'Travel', 'Groceries', 'Income', 'Gifts & Donations', 'Personal Care', 'Home & Garden', 'Insurance', 'Others'];
 
   const handleSort = (field: string) => {
     if (sortField === field) {
@@ -45,12 +52,13 @@ const TransactionHistory = () => {
 
   const filteredTransactions = transactions.filter((transaction) => {
     const searchLower = searchTerm.toLowerCase();
+    const categoryMatch = selectedCategory === 'all' || transaction.category?.toLowerCase() === selectedCategory.toLowerCase();
+    
+    // Search in category and description
+    const categoryMatch_search = transaction.category?.toLowerCase().includes(searchLower);
+    const descriptionMatch = transaction.description?.toLowerCase().includes(searchLower);
 
-    const categoryMatch = selectedCategory === 'all' || transaction.category.toLowerCase() === selectedCategory;
-
-    const searchMatch = transaction.category.toLowerCase().includes(searchLower);
-
-    return categoryMatch && searchMatch;
+    return categoryMatch && (categoryMatch_search || descriptionMatch || searchTerm === '');
   });
 
   const sortedTransactions = filteredTransactions.sort((a, b) => {
@@ -74,12 +82,12 @@ const TransactionHistory = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Transaction History</h1>
-            <p className="text-gray-500 mt-1">View and manage your transactions</p>
+            <h1 className="text-2xl font-bold text-primary-900 animate-fadeIn">Transaction History</h1>
+            <p className="text-primary-600 mt-1">View and manage your transactions</p>
           </div>
           <button
             onClick={handleAddTransactionClick}
-            className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+            className="btn-primary flex items-center"
           >
             <Plus className="w-5 h-5 mr-2" />
             Add Transaction
@@ -87,16 +95,16 @@ const TransactionHistory = () => {
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-xl shadow-sm p-4">
+        <div className="card p-4 animate-slideIn">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-gray-400" />
+                <Search className="h-5 w-5 text-primary-400" />
               </div>
               <input
                 type="text"
                 placeholder="Search transactions..."
-                className="pl-10 block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
+                className="input-focus pl-10 block w-full"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -104,7 +112,7 @@ const TransactionHistory = () => {
 
             <div>
               <select
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
+                className="input-focus block w-full"
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
               >
@@ -122,11 +130,11 @@ const TransactionHistory = () => {
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-primary-50">
                 <tr>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    className="px-6 py-3 text-left text-xs font-medium text-primary-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('date')}
                   >
                     <div className="flex items-center">
@@ -142,19 +150,20 @@ const TransactionHistory = () => {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium text-primary-500 uppercase tracking-wider"
+                    style={{ minWidth: '200px' }}
                   >
                     Description
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium text-primary-500 uppercase tracking-wider"
                   >
                     Category
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    className="px-6 py-3 text-left text-xs font-medium text-primary-500 uppercase tracking-wider cursor-pointer"
                     onClick={() => handleSort('amount')}
                   >
                     <div className="flex items-center">
@@ -168,51 +177,39 @@ const TransactionHistory = () => {
                       )}
                     </div>
                   </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Payment Method
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                  >
-                    Notes
-                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {sortedTransactions.map((transaction) => (
-                  <tr key={transaction._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <tr key={transaction._id} className="hover:bg-primary-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-900">
                       {new Date(transaction.date).toLocaleDateString()}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {transaction.notes || 'N/A'}
+                    <td className="px-6 py-4 text-sm text-primary-900" style={{ maxWidth: '300px', wordWrap: 'break-word' }}>
+                      <div className="whitespace-normal">
+                        {transaction.description && transaction.description.trim() ? (
+                          <span className="text-primary-900">{transaction.description}</span>
+                        ) : (
+                          <span className="text-gray-400 italic">No description</span>
+                        )}
+                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-500">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                         {transaction.category || 'N/A'}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
                       <div className="flex items-center">
                         {transaction.amount > 0 ? (
-                          <ArrowUpRight className="w-4 h-4 text-emerald-500 mr-1" />
+                          <ArrowUpRight className="w-4 h-4 text-primary-500 mr-1" />
                         ) : (
                           <ArrowDownRight className="w-4 h-4 text-red-500 mr-1" />
                         )}
-                        <span className={transaction.amount > 0 ? 'text-emerald-600' : 'text-red-600'}>
+                        <span className={transaction.amount > 0 ? 'text-primary-600' : 'text-red-600'}>
                           ${Math.abs(transaction.amount).toFixed(2)}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {transaction.paymentMethod || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {transaction.notes || 'N/A'}
                     </td>
                   </tr>
                 ))}

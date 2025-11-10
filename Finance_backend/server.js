@@ -25,6 +25,7 @@ const transactionRoutes = require('./routes/transaction');
 const categoryRoutes = require('./routes/category');
 const savingsGoalRoutes = require('./routes/savingsGoal');
 const reportRoutes = require('./routes/report');
+const budgetRoutes = require('./routes/budget');
 
 mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log("MongoDB connected"))
@@ -38,6 +39,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/savingsGoals', savingsGoalRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/budget', budgetRoutes);
 
 // Static folder for uploaded profile photos
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
@@ -47,6 +49,10 @@ app.use('/api/userSettings', userSettingsRoutes);
 
 // Use the prediction routes for handling POST requests
 app.use('/api', predictionRoutes);
+
+// Register recommendations routes
+const recommendationsRoutes = require('./routes/recommendations');
+app.use('/api/recommendations', recommendationsRoutes);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

@@ -81,6 +81,12 @@ const loadRecentReports = async () => {
       return;
     }
 
+    // Validate date range
+    if (new Date(dateRange.end) < new Date(dateRange.start)) {
+      alert('End date must be greater than or equal to start date');
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
@@ -121,13 +127,13 @@ const loadRecentReports = async () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Financial Reports</h1>
-            <p className="text-gray-500 mt-1">Generate and analyze your financial reports</p>
+            <h1 className="text-2xl font-bold text-primary-900 animate-fadeIn">Financial Reports</h1>
+            <p className="text-primary-600 mt-1">Generate and analyze your financial reports</p>
           </div>
         </div>
 
         <div className="bg-white rounded-xl shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-6">Generate New Report</h2>
+          <h2 className="text-lg font-semibold text-primary-900 mb-6">Generate New Report</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             {reportTypes.map((type) => {
@@ -138,17 +144,17 @@ const loadRecentReports = async () => {
                   onClick={() => setSelectedReport(type.id)}
                   className={`p-4 rounded-lg border-2 text-left ${
                     selectedReport === type.id
-                      ? 'border-emerald-500 bg-emerald-50'
-                      : 'border-gray-200 hover:border-gray-300'
+                      ? 'border-primary-500 bg-primary-50'
+                      : 'border-gray-200 hover:border-primary-300'
                   }`}
                 >
                   <Icon
                     className={`w-6 h-6 ${
-                      selectedReport === type.id ? 'text-emerald-500' : 'text-gray-400'
+                      selectedReport === type.id ? 'text-primary-500' : 'text-gray-400'
                     }`}
                   />
-                  <h3 className="font-medium text-gray-900 mt-2">{type.name}</h3>
-                  <p className="text-sm text-gray-500 mt-1">{type.description}</p>
+                  <h3 className="font-medium text-primary-900 mt-2">{type.name}</h3>
+                  <p className="text-sm text-primary-500 mt-1">{type.description}</p>
                 </button>
               );
             })}
@@ -156,27 +162,41 @@ const loadRecentReports = async () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Start Date</label>
+              <label className="block text-sm font-medium text-primary-700 mb-2">Start Date</label>
               <input
                 type="date"
                 value={dateRange.start}
-                onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                onChange={(e) => {
+                  setDateRange({ ...dateRange, start: e.target.value });
+                  // Reset end date if it becomes invalid
+                  if (dateRange.end && new Date(dateRange.end) < new Date(e.target.value)) {
+                    setDateRange({ start: e.target.value, end: '' });
+                  }
+                }}
+                max={dateRange.end || undefined}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">End Date</label>
+              <label className="block text-sm font-medium text-primary-700 mb-2">End Date</label>
               <input
                 type="date"
                 value={dateRange.end}
-                onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                onChange={(e) => {
+                  if (new Date(e.target.value) < new Date(dateRange.start)) {
+                    alert('End date must be greater than or equal to start date');
+                    return;
+                  }
+                  setDateRange({ ...dateRange, end: e.target.value });
+                }}
+                min={dateRange.start || undefined}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Categories</label>
+            <label className="block text-sm font-medium text-primary-700 mb-2">Categories</label>
             <div className="flex flex-wrap gap-2">
               {categories.map((cat) => (
                 <button
@@ -184,8 +204,8 @@ const loadRecentReports = async () => {
                   onClick={() => toggleCategory(cat)}
                   className={`px-3 py-1 rounded-full text-sm font-medium ${
                     selectedCategories.includes(cat)
-                      ? 'bg-emerald-100 text-emerald-800'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-primary-100 text-primary-800'
+                      : 'bg-gray-100 text-gray-600 hover:bg-primary-200'
                   }`}
                 >
                   {cat}
@@ -198,7 +218,7 @@ const loadRecentReports = async () => {
             <button
               onClick={handleGenerateReport}
               disabled={isGenerating}
-              className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isGenerating ? (
                 <>
@@ -217,43 +237,43 @@ const loadRecentReports = async () => {
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Reports</h2>
+            <h2 className="text-lg font-semibold text-primary-900">Recent Reports</h2>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+              <thead className="bg-primary-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-primary-500 uppercase tracking-wider">
                     Report Name
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-primary-500 uppercase tracking-wider">
                     Type
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-primary-500 uppercase tracking-wider">
                     Generated Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-primary-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-primary-500 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {recentReports.map((report) => (
-                  <tr key={report._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <tr key={report._id} className="hover:bg-primary-50">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-primary-900">
                       {report.name}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-500">
                       {report.type}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-primary-500">
                       {new Date(report.date).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
                         {report.status || 'completed'}
                       </span>
                     </td>
@@ -262,7 +282,7 @@ const loadRecentReports = async () => {
                         href={`http://localhost:5000${report.fileUrl}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-emerald-600 hover:text-emerald-900"
+                        className="text-primary-600 hover:text-primary-900"
                         download
                       >
                         <Download className="w-5 h-5" />

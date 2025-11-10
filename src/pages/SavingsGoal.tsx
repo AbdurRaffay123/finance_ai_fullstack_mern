@@ -50,15 +50,62 @@ const SavingsGoal = () => {
   // New state for delete confirmation modal
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
-  // Monthly progress (dummy data)
-  const monthlyProgress = [
-    { month: 'Jan', amount: 1200 },
-    { month: 'Feb', amount: 2400 },
-    { month: 'Mar', amount: 3500 },
-    { month: 'Apr', amount: 4800 },
-    { month: 'May', amount: 6200 },
-    { month: 'Jun', amount: 7500 },
-  ];
+  // Calculate monthly progress from actual goals data
+  const calculateMonthlyProgress = () => {
+    if (goals.length === 0) return [];
+    
+    // Get last 6 months of data
+    const monthlyData: { month: string; amount: number }[] = [];
+    const currentDate = new Date();
+    
+    // Calculate total current savings across all goals
+    const totalCurrentSavings = goals.reduce((sum, goal) => sum + (goal.currentAmount || 0), 0);
+    
+    if (totalCurrentSavings === 0) {
+      // If no savings yet, show zeros for all months
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+        const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+        monthlyData.push({ month: monthName, amount: 0 });
+      }
+      return monthlyData;
+    }
+    
+    // Calculate based on when goals were created and their progress
+    // Use the oldest goal's creation date as starting point
+    const oldestGoal = goals.reduce((oldest, goal) => {
+      const goalDate = goal.createdAt ? new Date(goal.createdAt) : new Date(goal.deadline);
+      const oldestDate = oldest.createdAt ? new Date(oldest.createdAt) : new Date(oldest.deadline);
+      return goalDate < oldestDate ? goal : oldest;
+    }, goals[0]);
+    
+    const startDate = oldestGoal.createdAt ? new Date(oldestGoal.createdAt) : new Date(oldestGoal.deadline);
+    const monthsSinceStart = Math.max(1, Math.floor((currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30)));
+    
+    // Distribute savings progress across months
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
+      const monthName = date.toLocaleDateString('en-US', { month: 'short' });
+      
+      // Calculate how many months ago this was from the start
+      const monthsAgo = Math.floor((currentDate.getTime() - date.getTime()) / (1000 * 60 * 60 * 24 * 30));
+      const monthsFromStart = monthsSinceStart - monthsAgo;
+      
+      if (monthsFromStart <= 0) {
+        // Before any goals were created
+        monthlyData.push({ month: monthName, amount: 0 });
+      } else {
+        // Estimate progress: assume linear accumulation over time
+        const progressRatio = Math.min(1, monthsFromStart / monthsSinceStart);
+        const estimatedAmount = Math.round(totalCurrentSavings * progressRatio);
+        monthlyData.push({ month: monthName, amount: estimatedAmount });
+      }
+    }
+    
+    return monthlyData;
+  };
+
+  const monthlyProgress = calculateMonthlyProgress();
 
   // Calculate average monthly savings across all goals
   const averageMonthlySavings = (() => {
@@ -89,6 +136,14 @@ const SavingsGoal = () => {
   useEffect(() => {
     loadGoals();
   }, []);
+
+  // Recalculate progress when goals change
+  useEffect(() => {
+    // This ensures the chart updates when goals are updated
+    if (goals.length > 0) {
+      console.log('Goals updated, recalculating progress:', goals);
+    }
+  }, [goals]);
 
   const loadGoals = async () => {
     try {
@@ -214,8 +269,8 @@ const SavingsGoal = () => {
         {/* Header */}
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Savings Goals</h1>
-            <p className="text-gray-500 mt-1">Track and manage your financial goals</p>
+            <h1 className="text-2xl font-bold text-primary-900 animate-fadeIn">Savings Goals</h1>
+            <p className="text-primary-600 mt-1">Track and manage your financial goals</p>
           </div>
           <button
             onClick={() => {
@@ -223,7 +278,7 @@ const SavingsGoal = () => {
               setNewGoal({ name: '', targetAmount: '', deadline: '', category: 'vacation' });
               setShowNewGoalForm(true);
             }}
-            className="flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+            className="btn-primary flex items-center animate-slideIn"
           >
             <Plus className="w-5 h-5 mr-2" />
             New Goal
@@ -319,22 +374,63 @@ const SavingsGoal = () => {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <h2 className="text-lg font-semibold text-gray-900 mb-6">Savings Progress</h2>
           <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={monthlyProgress}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
-                <YAxis />
-                <Tooltip />
-                <Line
-                  type="monotone"
-                  dataKey="amount"
-                  stroke="#059669"
-                  strokeWidth={2}
-                  dot={{ fill: '#059669' }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            {goals.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <p className="text-gray-500 text-lg mb-2">No savings goals yet</p>
+                  <p className="text-gray-400 text-sm">Create a savings goal to see your progress over time</p>
+                </div>
+              </div>
+            ) : monthlyProgress.length === 0 ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="text-center">
+                  <p className="text-gray-500 text-lg mb-2">Calculating progress...</p>
+                </div>
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={monthlyProgress} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="month" 
+                    stroke="#6b7280"
+                    style={{ fontSize: '12px' }}
+                  />
+                  <YAxis 
+                    stroke="#6b7280"
+                    style={{ fontSize: '12px' }}
+                    tickFormatter={(value) => `$${value.toLocaleString()}`}
+                  />
+                  <Tooltip 
+                    formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Savings']}
+                    contentStyle={{
+                      backgroundColor: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="amount"
+                    stroke="#059669"
+                    strokeWidth={3}
+                    dot={{ fill: '#059669', r: 5 }}
+                    activeDot={{ r: 7 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
           </div>
+          {goals.length > 0 && monthlyProgress.length > 0 && (
+            <div className="mt-4 text-center">
+              <p className="text-sm text-gray-600">
+                Total Savings: <span className="font-semibold text-gray-900">
+                  ${monthlyProgress[monthlyProgress.length - 1]?.amount.toLocaleString() || 0}
+                </span>
+              </p>
+            </div>
+          )}
         </div>
 
         {/* New Goal Modal */}

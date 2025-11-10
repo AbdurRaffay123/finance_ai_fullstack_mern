@@ -1,8 +1,18 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from model import make_prediction
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],  # Frontend URLs
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Define the input data structure
 class UserInput(BaseModel):
@@ -31,8 +41,17 @@ async def predict(user_input: UserInput):
     try:
         # Convert incoming data into dictionary and pass to prediction function
         input_data = user_input.dict()
+        
+        # Log input for debugging
+        print(f"=== FASTAPI PREDICTION REQUEST ===")
+        print(f"Input data: {input_data}")
+        
         prediction = make_prediction(input_data)
+        
+        print(f"Prediction result: {prediction}")
         return {"predictions": prediction}
     except Exception as e:
         print(f"Error during prediction: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")

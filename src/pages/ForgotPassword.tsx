@@ -1,15 +1,36 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Mail } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail, Loader2 } from 'lucide-react';
+import { forgotPassword } from '../api';
 
 const ForgotPassword = () => {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement password reset logic
-    setSubmitted(true);
+    setError('');
+    setLoading(true);
+
+    try {
+      const response = await forgotPassword(email);
+      if (response.success) {
+        setSubmitted(true);
+        // Navigate to verify-otp after 2 seconds
+        setTimeout(() => {
+          navigate('/verify-otp', { state: { email } });
+        }, 2000);
+      } else {
+        setError(response.message || 'Something went wrong. Please try again.');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (submitted) {
@@ -65,12 +86,24 @@ const ForgotPassword = () => {
               </div>
             </div>
 
+            {error && (
+              <div className="text-red-600 text-sm text-center">{error}</div>
+            )}
+
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500"
+                disabled={loading}
+                className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Send reset link
+                {loading ? (
+                  <>
+                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                    Sending...
+                  </>
+                ) : (
+                  'Send OTP'
+                )}
               </button>
             </div>
 

@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   Brain,
+  DollarSign,
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -35,19 +36,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navItems = [
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/expenses', icon: Wallet, label: 'Expenses' },
-    { path: '/trends', icon: TrendingUp, label: 'Trends' },
+    { path: '/budget-management', icon: DollarSign, label: 'Budget' },
     { path: '/savings', icon: Target, label: 'Goals' },
-    { path: '/overview', icon: LineChart, label: 'Overview' },
     { path: '/recommendations', icon: Brain, label: 'AI Insights' },
     { path: '/reports', icon: FileText, label: 'Reports' },
     { path: '/settings', icon: Settings, label: 'Settings' },
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <nav className="w-64 bg-white border-r border-gray-200 px-4 py-6">
+    <div className="flex h-screen bg-gradient-soft">
+      <nav className="w-64 bg-white border-r border-primary-200 px-4 py-6" style={{boxShadow: '0 2px 8px 0 rgba(53, 80, 112, 0.08)'}}>
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-emerald-600">FinanceAI</h1>
+          <Link to="/dashboard" className="cursor-pointer">
+            <h1 className="text-2xl font-bold gradient-text">FinanceAI</h1>
+          </Link>
         </div>
         <div className="space-y-1">
           {navItems.map((item) => {
@@ -56,10 +58,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex items-center px-4 py-2 text-sm rounded-lg ${
+                className={`flex items-center px-4 py-3 text-sm rounded-lg transition-all duration-200 ${
                   location.pathname === item.path
-                    ? 'bg-emerald-50 text-emerald-600'
-                    : 'text-gray-600 hover:bg-gray-50'
+                    ? 'bg-gradient-primary text-white'
+                    : 'text-primary-700 hover:bg-primary-50 hover:text-primary-600'
                 }`}
               >
                 <Icon className="w-5 h-5 mr-3" />
@@ -70,7 +72,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Logout Button */}
           <button
             onClick={handleLogout}
-            className="flex items-center px-4 py-2 text-sm text-gray-600 hover:bg-red-500 w-full mt-4 rounded-lg"
+            className="flex items-center px-4 py-3 text-sm text-accent-600 hover:bg-accent-50 hover:text-accent-700 w-full mt-4 rounded-lg transition-all duration-200"
           >
             <LogOut className="w-5 h-5 mr-3" />
             Logout

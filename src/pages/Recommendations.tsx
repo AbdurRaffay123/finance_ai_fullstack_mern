@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../components/Layout';
-import api from '../api';
+import { getPredictions } from '../api';
 
 const initialFormData = {
   Age: '',
@@ -110,8 +110,8 @@ const Recommendations = () => {
       payload.Desired_Savings_Percentage =
         payload.Income > 0 ? (payload.Desired_Savings / payload.Income) * 100 : 0;
 
-      const res = await api.post('/predict', payload);
-      setPredictions(res.data.predictions);
+      const res = await getPredictions(payload);
+      setPredictions(res.predictions);
     } catch (err) {
       setError('Failed to fetch predictions.');
       console.error(err);
@@ -148,26 +148,26 @@ const Recommendations = () => {
         .input-container select {
           width: 100%;
           padding: 1.25rem 0.75rem 0.5rem 0.75rem;
-          border: 2px solid #d1fae5; /* Tailwind emerald-200 */
+          border: 2px solid #cbd5e1; /* Tailwind primary-300 */
           border-radius: 0.5rem;
-          background: #f0fdf4; /* Tailwind emerald-50 */
+          background: #f8fafc; /* Tailwind primary-50 */
           transition: border-color 0.3s ease;
           font-weight: 600;
-          color: #065f46; /* Tailwind emerald-800 */
+          color: #1e232b; /* Tailwind primary-900 */
         }
         .input-container input:focus,
         .input-container select:focus {
           outline: none;
-          border-color: #10b981; /* Tailwind emerald-500 */
+          border-color: #355070; /* Tailwind primary-500 */
           background: white;
-          box-shadow: 0 0 10px #6ee7b7;
+          box-shadow: 0 0 10px rgba(53, 80, 112, 0.2);
         }
         .input-container label {
           position: absolute;
           left: 0.75rem;
           top: 1.25rem;
           font-size: 1rem;
-          color: #16a34a; /* emerald-600 */
+          color: #6d597a; /* secondary-500 */
           font-weight: 700;
           pointer-events: none;
           transition: all 0.3s ease;
@@ -179,42 +179,42 @@ const Recommendations = () => {
         .input-container select:not([value=""]) + label {
           top: 0.25rem;
           font-size: 0.75rem;
-          color: #059669; /* emerald-600 */
+          color: #355070; /* primary-500 */
           background: white;
           padding: 0 0.25rem;
           border-radius: 0.25rem;
         }
         /* Button styles */
         button.primary-btn {
-          background: linear-gradient(90deg, #059669, #10b981);
+          background: linear-gradient(90deg, #355070, #6d597a);
           padding: 0.75rem 3rem;
           font-weight: 700;
           font-size: 1.1rem;
           border-radius: 9999px;
           color: white;
-          box-shadow: 0 8px 15px rgba(16, 185, 129, 0.4);
+          box-shadow: 0 8px 15px rgba(53, 80, 112, 0.4);
           transition: all 0.3s ease;
           border: none;
           cursor: pointer;
           user-select: none;
         }
         button.primary-btn:hover {
-          background: linear-gradient(90deg, #10b981, #059669);
-          box-shadow: 0 12px 20px rgba(16, 185, 129, 0.6);
+          background: linear-gradient(90deg, #6d597a, #355070);
+          box-shadow: 0 12px 20px rgba(53, 80, 112, 0.6);
           transform: translateY(-3px);
         }
         button.primary-btn:disabled {
-          background: #6ee7b7;
+          background: #cbd5e1;
           box-shadow: none;
           cursor: not-allowed;
           transform: none;
         }
         /* Prediction cards */
         .prediction-card {
-          background: #d1fae5; /* emerald-200 */
+          background: #e2e8f0; /* primary-200 */
           border-radius: 1rem;
           padding: 1.5rem 2rem;
-          box-shadow: 0 8px 15px rgba(6, 95, 70, 0.15);
+          box-shadow: 0 8px 15px rgba(53, 80, 112, 0.15);
           transition: box-shadow 0.3s ease;
           display: flex;
           align-items: center;
@@ -222,12 +222,12 @@ const Recommendations = () => {
           cursor: default;
         }
         .prediction-card:hover {
-          box-shadow: 0 12px 25px rgba(6, 95, 70, 0.3);
+          box-shadow: 0 12px 25px rgba(53, 80, 112, 0.3);
           transform: translateY(-5px);
         }
         .prediction-icon {
           font-size: 3rem;
-          background: linear-gradient(135deg, #34d399, #059669);
+          background: linear-gradient(135deg, #355070, #6d597a);
           color: white;
           border-radius: 50%;
           width: 60px;
@@ -235,26 +235,26 @@ const Recommendations = () => {
           display: flex;
           align-items: center;
           justify-content: center;
-          box-shadow: 0 6px 12px rgba(6, 95, 70, 0.3);
+          box-shadow: 0 6px 12px rgba(53, 80, 112, 0.3);
           user-select: none;
         }
         .prediction-label {
           font-weight: 700;
           font-size: 1.125rem;
-          color: #065f46;
+          color: #1e232b;
           text-transform: capitalize;
         }
         .prediction-value {
           font-weight: 900;
           font-size: 1.5rem;
-          color: #047857;
+          color: #355070;
           margin-left: auto;
           user-select: text;
         }
       `}</style>
 
       <div className="max-w-5xl mx-auto p-8 bg-white rounded-3xl shadow-2xl">
-        <h1 className="text-4xl font-extrabold mb-10 text-center text-emerald-700 tracking-wide">
+        <h1 className="text-4xl font-extrabold mb-10 text-center text-primary-700 tracking-wide animate-fadeIn">
           Savings Prediction Form
         </h1>
 
@@ -286,7 +286,7 @@ const Recommendations = () => {
                             {label}
                           </option>
                         ))
-                      : ['Professional', 'Clerical', 'Skilled', 'Unskilled'].map(o => (
+                      : ['Professional', 'Self_Employed', 'Retired', 'Student'].map(o => (
                           <option key={o} value={o}>
                             {o}
                           </option>

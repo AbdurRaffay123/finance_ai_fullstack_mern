@@ -4,14 +4,14 @@ import LandingPage from './pages/LandingPage';
 import SignUp from './pages/SignUp';
 import Login from './pages/Login';
 import ForgotPassword from './pages/ForgotPassword';
+import VerifyOTP from './pages/VerifyOTP';
 import CreateNewPassword from './pages/CreateNewPassword';
 import AddTransaction from './pages/AddTransaction';
 import ExpenseManagement from './pages/ExpenseManagement';
 import BudgetSetup from './pages/BudgetSetup';
+import BudgetManagement from './pages/BudgetManagement';
 import SavingsGoal from './pages/SavingsGoal';
-import FinancialOverview from './pages/FinancialOverview';
-import Recommendations from './pages/Recommendations';
-import SpendingTrends from './pages/SpendingTrends';
+import AIInsights from './pages/AIInsights';
 import GenerateReports from './pages/GenerateReports';
 import ProfileSettings from './pages/ProfileSettings';
 import MonthlySummary from './pages/MonthlySummary';
@@ -22,24 +22,25 @@ import './styles/global.css';
 
 function App() {
   return (
-    <Router>
+    <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/verify-otp" element={<VerifyOTP />} />
+        <Route path="/reset-password" element={<CreateNewPassword />} />
         <Route path="/create-new-password" element={<CreateNewPassword />} />
 
       
-        <Route path="/Dashboard" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/add-transaction" element={<AddTransaction />} />
         <Route path="/expenses" element={<ExpenseManagement />} />
         <Route path="/budget" element={<BudgetSetup />} />
+        <Route path="/budget-management" element={<BudgetManagement />} />
         <Route path="/savings" element={<SavingsGoal />} />
-        <Route path="/overview" element={<FinancialOverview />} />
-        <Route path="/recommendations" element={<Recommendations />} />
-        <Route path="/trends" element={<SpendingTrends />} />
+        <Route path="/recommendations" element={<AIInsights />} />
         <Route path="/reports" element={<GenerateReports />} />
         <Route path="/settings" element={<ProfileSettings />} />
         <Route path="/monthly-summary" element={<MonthlySummary />} />

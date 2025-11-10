@@ -5,7 +5,10 @@ const PDFDocument = require('pdfkit');
 const path = require('path');
 const fs = require('fs');
 const Report = require('../models/Report');
-const Transaction = require('../models/Transaction'); // Your transactions model
+const Transaction = require('../models/Transaction');
+const Category = require('../models/Category');
+const SavingsGoal = require('../models/SavingsGoal');
+const UserBudget = require('../models/UserBudget');
 
 // JWT auth middleware
 const verifyToken = (req, res, next) => {
@@ -56,6 +59,13 @@ router.post('/generate', verifyToken, async (req, res) => {
 
     const transactions = await Transaction.find(query).sort({ date: 1 });
 
+    // Fetch all related data for comprehensive report
+    const [allCategories, allSavingsGoals, userBudgets] = await Promise.all([
+      Category.find({ userId: req.user.id }),
+      SavingsGoal.find({ userId: req.user.id }),
+      UserBudget.find({ userId: req.user.id }).sort({ currentMonth: -1 }).limit(1),
+    ]);
+
     // Create PDF doc
     const doc = new PDFDocument({ margin: 30, size: 'A4' });
     const fileName = `${Date.now()}-${reportName.replace(/\s+/g, '_')}.pdf`;
@@ -73,9 +83,20 @@ router.post('/generate', verifyToken, async (req, res) => {
     doc.text(`Report Type: ${reportType}`);
     doc.text(`Date Range: ${startDate} to ${endDate}`);
     if (categories && categories.length > 0) {
-      doc.text(`Categories: ${categories.join(', ')}`);
+      doc.text(`Selected Categories: ${categories.join(', ')}`);
     } else {
       doc.text('Categories: All');
+    }
+    doc.moveDown();
+
+    // Add comprehensive category information
+    doc.fontSize(12).text('--- Expense Categories Overview ---');
+    if (allCategories.length > 0) {
+      allCategories.forEach((cat) => {
+        doc.fontSize(10).text(`  • ${cat.name}: Budget $${cat.budget.toFixed(2)}, Spent $${(cat.spentAmount || 0).toFixed(2)}`);
+      });
+    } else {
+      doc.fontSize(10).text('  No expense categories defined');
     }
     doc.moveDown();
 
@@ -115,6 +136,29 @@ router.post('/generate', verifyToken, async (req, res) => {
 
     } else {
       doc.text('Unknown report type');
+    }
+
+    // Add Budget Information
+    doc.moveDown();
+    doc.fontSize(12).text('--- Budget Information ---');
+    if (userBudgets.length > 0) {
+      const budget = userBudgets[0];
+      doc.fontSize(10).text(`  Monthly Budget: $${budget.monthlyBudget.toFixed(2)}`);
+      doc.fontSize(10).text(`  Period: ${budget.currentMonth}`);
+    } else {
+      doc.fontSize(10).text('  No budget information available');
+    }
+
+    // Add Savings Goals Summary
+    doc.moveDown();
+    doc.fontSize(12).text('--- Savings Goals Summary ---');
+    if (allSavingsGoals.length > 0) {
+      allSavingsGoals.forEach((goal) => {
+        const progress = goal.targetAmount > 0 ? ((goal.currentAmount / goal.targetAmount) * 100).toFixed(1) : 0;
+        doc.fontSize(10).text(`  • ${goal.name}: $${goal.currentAmount.toFixed(2)} / $${goal.targetAmount.toFixed(2)} (${progress}%)`);
+      });
+    } else {
+      doc.fontSize(10).text('  No savings goals defined');
     }
 
     doc.end();

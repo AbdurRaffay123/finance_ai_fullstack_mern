@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Set Token</title>
+</head>
+<body>
+    <h1>Setting JWT Token</h1>
+    <p>Token will be set in localStorage. You can close this tab after the redirect.</p>
+    
+    <script>
+        const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZjRjN2E3MWMxNmQwZTNiYWQ0MDViNiIsImVtYWlsIjoidGVzdEBleGFtcGxlLmNvbSIsImlhdCI6MTc2MDg3MjM1OSwiZXhwIjoxNzYxNDc3MTU5fQ.3u0GufFKhq_p7_nopNn-_2Ta5m_oN45rVsDPmCM8S_U';
+        
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('user', JSON.stringify({
+            id: '68f4c7a71c16d0e3bad405b6',
+            email: 'test@example.com',
+            fullName: 'Test User'
+        }));
+        
+        console.log('Token set:', token);
+        console.log('User set:', JSON.parse(localStorage.getItem('user')));
+        
+        // Redirect to dashboard
+        setTimeout(() => {
+            window.location.href = 'http://localhost:5173/dashboard';
+        }, 1000);
+    </script>
+</body>
+</html>
+

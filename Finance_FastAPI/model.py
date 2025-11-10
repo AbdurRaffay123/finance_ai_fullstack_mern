@@ -40,14 +40,45 @@ def make_prediction(user_input):
 
         # Make prediction
         prediction = model.predict(processed_input)[0]
+        
+        # Log raw prediction for debugging
+        print(f"Raw prediction values: {prediction}")
+        print(f"Prediction shape: {prediction.shape}")
+        print(f"Input data summary:")
+        print(f"  Income: {user_input.get('Income', 0)}")
+        print(f"  Transport: {user_input.get('Transport', 0)}")
+        print(f"  Groceries: {user_input.get('Groceries', 0)}")
 
-        # Map predictions to category names
-        prediction_result = {
-            col: round(val, 2) for col, val in zip(target_columns, prediction)
+        # Validate and clamp predictions to reasonable values
+        # Predictions should be savings amounts, which should be less than the input expenses
+        max_reasonable_savings = {
+            'Potential_Savings_Groceries': user_input.get('Groceries', 0) * 0.5,  # Max 50% savings
+            'Potential_Savings_Transport': user_input.get('Transport', 0) * 0.5,
+            'Potential_Savings_Eating_Out': user_input.get('Eating_Out', 0) * 0.5,
+            'Potential_Savings_Entertainment': user_input.get('Entertainment', 0) * 0.5,
+            'Potential_Savings_Utilities': user_input.get('Utilities', 0) * 0.5,
+            'Potential_Savings_Miscellaneous': user_input.get('Miscellaneous', 0) * 0.5,
         }
+        
+        # Map predictions to category names and validate
+        prediction_result = {}
+        for i, col in enumerate(target_columns):
+            raw_val = prediction[i]
+            # Clamp to reasonable maximum (50% of input expense for that category)
+            max_val = max_reasonable_savings.get(col, raw_val)
+            # Ensure prediction is positive and reasonable
+            clamped_val = max(0, min(raw_val, max_val))
+            
+            # If value is suspiciously large, log warning
+            if raw_val > max_val * 2:
+                print(f"⚠️ WARNING: {col} prediction {raw_val:.2f} seems too large, clamping to {clamped_val:.2f}")
+            
+            prediction_result[col] = round(clamped_val, 2)
 
         # Compute total predicted savings
-        prediction_result["Total_Predicted_Savings"] = round(sum(prediction), 2)
+        prediction_result["Total_Predicted_Savings"] = round(sum(prediction_result.values()), 2)
+        
+        print(f"Final prediction result: {prediction_result}")
 
         return prediction_result
 
