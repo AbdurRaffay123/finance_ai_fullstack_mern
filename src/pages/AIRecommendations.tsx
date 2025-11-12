@@ -17,6 +17,7 @@ import {
   BarChart3,
   PieChart
 } from 'lucide-react';
+import { getUserFriendlyError } from '../utils/errorMessages';
 import { 
   fetchTransactions, 
   fetchCategories, 
@@ -101,7 +102,8 @@ const AIRecommendations = () => {
         status: err.response?.status,
         statusText: err.response?.statusText,
       });
-      setError(err.response?.data?.message || err.message || 'Failed to get recommendations. Please try again.');
+      const friendlyError = getUserFriendlyError(err, 'Unable to get AI recommendations. Please try again.');
+      setError(friendlyError);
       
       // Fallback: Show sample recommendations if API fails
       setRecommendations([
@@ -211,12 +213,20 @@ const AIRecommendations = () => {
 
       {/* Error Display */}
       {error && (
-        <div className="bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg p-5 shadow-lg animate-slideIn">
+        <div className="w-full max-w-6xl bg-white rounded-2xl shadow-xl p-8 animate-slideIn border border-red-200">
           <div className="flex items-start">
-            <AlertCircle className="w-6 h-6 text-red-600 mr-4 flex-shrink-0 mt-0.5" />
+            <div className="bg-red-100 p-2 rounded-full mr-4 flex-shrink-0">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+            </div>
             <div className="flex-1">
-              <p className="text-red-800 font-bold text-lg mb-1">Error</p>
-              <p className="text-red-700 text-sm">{error}</p>
+              <h2 className="text-xl font-bold text-red-900 mb-2">Unable to Get Recommendations</h2>
+              <p className="text-red-700 mb-4">{error}</p>
+              <button
+                onClick={getRecommendations}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
+              >
+                Try Again
+              </button>
             </div>
           </div>
         </div>

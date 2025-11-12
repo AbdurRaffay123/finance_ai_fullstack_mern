@@ -12,8 +12,12 @@ import BudgetSetup from './pages/BudgetSetup';
 import BudgetManagement from './pages/BudgetManagement';
 import SavingsGoal from './pages/SavingsGoal';
 import AIInsights from './pages/AIInsights';
+import Recommendations from './pages/Recommendations';
+import Predictions from './pages/Predictions';
 import GenerateReports from './pages/GenerateReports';
 import ProfileSettings from './pages/ProfileSettings';
+import Profile from './pages/Profile';
+import Security from './pages/Security';
 import MonthlySummary from './pages/MonthlySummary';
 import CategoriesAnalysis from './pages/CategoriesAnalysis';
 import TransactionHistory from './pages/TransactionHistory';
@@ -40,9 +44,12 @@ function App() {
         <Route path="/budget" element={<BudgetSetup />} />
         <Route path="/budget-management" element={<BudgetManagement />} />
         <Route path="/savings" element={<SavingsGoal />} />
-        <Route path="/recommendations" element={<AIInsights />} />
+        <Route path="/recommendations" element={<Recommendations />} />
+        <Route path="/predictions" element={<Predictions />} />
         <Route path="/reports" element={<GenerateReports />} />
         <Route path="/settings" element={<ProfileSettings />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/security" element={<Security />} />
         <Route path="/monthly-summary" element={<MonthlySummary />} />
         <Route path="/categories-analysis" element={<CategoriesAnalysis />} />
         <Route path="/transaction-history" element={<TransactionHistory />} />

@@ -129,7 +129,7 @@ router.get('/dashboard-stats', verifyToken, async (req, res) => {
         // Create default budget if none exists
         budget = new UserBudget({
           userId,
-          monthlyBudget: 5000, // Default budget
+          monthlyBudget: 0, // Default budget
           currentMonth: currentMonth
         });
         await budget.save();

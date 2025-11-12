@@ -36,7 +36,7 @@ router.get('/', verifyToken, async (req, res) => {
         // Create new budget with default value
         budget = new UserBudget({
           userId: req.user.id,
-          monthlyBudget: 5000, // Default budget
+          monthlyBudget: 0, // Default budget
           currentMonth: currentMonth
         });
         await budget.save();

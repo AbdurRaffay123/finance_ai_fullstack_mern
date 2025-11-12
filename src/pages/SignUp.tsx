@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff } from 'lucide-react';
-import api from '../api'; // Axios instance for API calls
+import { Mail, Lock, User, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import api from '../api';
+import { getContextualError } from '../utils/errorMessages';
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -14,12 +15,20 @@ const SignUp = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const [errorMessage, setErrorMessage] = useState('');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage(''); // Clear previous errors
 
-    // Simple validation for demo purposes
+    // Validation
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match!');
+      setErrorMessage('Passwords do not match');
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long');
       return;
     }
 
@@ -31,11 +40,13 @@ const SignUp = () => {
       });
 
       // Save JWT token in localStorage upon successful sign-up
-      localStorage.setItem('authToken', response.data.token);  // Save JWT token
-      console.log('User signed up:', formData);
+      localStorage.setItem('authToken', response.data.token);
+      console.log('User signed up successfully');
       navigate('/dashboard');  // Redirect after successful sign-up
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error signing up:', error);
+      const friendlyError = getContextualError(error, 'signup');
+      setErrorMessage(friendlyError);
     }
   };
 
@@ -172,6 +183,13 @@ const SignUp = () => {
                 </button>
               </div>
             </div>
+
+            {errorMessage && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start">
+                <AlertCircle className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+                <p className="text-red-700 text-sm">{errorMessage}</p>
+              </div>
+            )}
 
             <button
               type="submit"

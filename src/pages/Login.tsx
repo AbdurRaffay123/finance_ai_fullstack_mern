@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
-import api from '../api'; // Import the API utility
+import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import api from '../api';
+import { getContextualError } from '../utils/errorMessages';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -28,8 +29,9 @@ const Login = () => {
 
       // Redirect to the dashboard
       navigate('/dashboard');
-    } catch (error) {
-      setErrorMessage('Invalid email or password');
+    } catch (error: any) {
+      const friendlyError = getContextualError(error, 'login');
+      setErrorMessage(friendlyError);
     }
   };
 
@@ -111,7 +113,10 @@ const Login = () => {
             </div>
 
             {errorMessage && (
-              <div className="text-accent-600 text-sm text-center mt-4">{errorMessage}</div>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-4 flex items-start">
+                <AlertCircle className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+                <p className="text-red-700 text-sm">{errorMessage}</p>
+              </div>
             )}
 
             <div className="text-sm text-right">

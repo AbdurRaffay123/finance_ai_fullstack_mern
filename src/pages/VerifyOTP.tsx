@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Mail, Loader2, RefreshCw } from 'lucide-react';
+import { Mail, Loader2, RefreshCw, AlertCircle } from 'lucide-react';
 import { verifyOTP, resendOTP } from '../api';
+import { getUserFriendlyError } from '../utils/errorMessages';
 
 const VerifyOTP = () => {
   const navigate = useNavigate();
@@ -99,7 +100,7 @@ const VerifyOTP = () => {
         setError(response.message || 'Invalid code. Please try again.');
       }
     } catch (err: any) {
-      const errorMessage = err.response?.data?.message || 'An error occurred. Please try again.';
+      const errorMessage = getUserFriendlyError(err, 'Invalid or expired code. Please request a new code.');
       setError(errorMessage);
 
       // Extract attempts left from error message if available
@@ -132,7 +133,8 @@ const VerifyOTP = () => {
         setError(response.message || 'Failed to resend OTP. Please try again.');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to resend OTP. Please try again.');
+      const friendlyError = getUserFriendlyError(err, 'Unable to resend code. Please try again.');
+      setError(friendlyError);
     } finally {
       setResendLoading(false);
     }
@@ -182,8 +184,9 @@ const VerifyOTP = () => {
             </div>
 
             {error && (
-              <div className="text-red-600 text-sm text-center bg-red-50 p-3 rounded-lg">
-                {error}
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start">
+                <AlertCircle className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+                <p className="text-red-700 text-sm">{error}</p>
               </div>
             )}
 

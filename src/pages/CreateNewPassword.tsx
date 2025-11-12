@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { KeyRound, Loader2, Eye, EyeOff } from 'lucide-react';
+import { KeyRound, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { resetPassword } from '../api';
+import { getContextualError } from '../utils/errorMessages';
 
 const CreateNewPassword = () => {
   const navigate = useNavigate();
@@ -58,10 +59,11 @@ const CreateNewPassword = () => {
           navigate('/login', { state: { message: 'Password reset successfully. Please login with your new password.' } });
         }, 2000);
       } else {
-        setError(response.message || 'Failed to reset password. Please try again.');
+        setError(response.message || 'Unable to reset your password. Please try again.');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to reset password. Please try again.');
+      const friendlyError = getContextualError(err, 'resetPassword');
+      setError(friendlyError);
     } finally {
       setLoading(false);
     }
@@ -181,7 +183,10 @@ const CreateNewPassword = () => {
           </div>
 
           {error && (
-            <p className="text-red-600 text-sm">{error}</p>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start">
+              <AlertCircle className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+              <p className="text-red-700 text-sm">{error}</p>
+            </div>
           )}
 
           <button

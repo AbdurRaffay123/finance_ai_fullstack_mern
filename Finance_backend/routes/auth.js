@@ -9,38 +9,90 @@ const router = express.Router();
 
 // Signup Route
 router.post('/signup', async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  // Check if user already exists
-  const userExists = await User.findOne({ email });
-  if (userExists) return res.status(400).json({ message: 'User already exists' });
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-  // Create a new user
-  const user = new User({ email, password });
-  await user.save();
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
 
-  // Create JWT token
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    // Validate password length
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Password must be at least 6 characters long' });
+    }
 
-  res.status(201).json({ token });
+    // Normalize email (lowercase)
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user already exists
+    const userExists = await User.findOne({ email: normalizedEmail });
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Create a new user
+    const user = new User({ email: normalizedEmail, password });
+    await user.save();
+
+    // Create JWT token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(201).json({ 
+      token,
+      message: 'User created successfully'
+    });
+  } catch (error) {
+    console.error('Signup error:', error);
+    if (error.code === 11000) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+    res.status(500).json({ message: 'Server error. Please try again.' });
+  }
 });
 
 // Login Route
 router.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
 
-  // Check if user exists
-  const user = await User.findOne({ email });
-  if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+    // Validate input
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
 
-  // Compare password
-  const isMatch = await user.matchPassword(password);
-  if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+    // Normalize email (lowercase)
+    const normalizedEmail = email.toLowerCase().trim();
 
-  // Create JWT token
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    // Check if user exists
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
 
-  res.status(200).json({ token });
+    // Compare password
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Create JWT token
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(200).json({ 
+      token,
+      message: 'Login successful'
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ message: 'Server error. Please try again.' });
+  }
 });
 
 /**

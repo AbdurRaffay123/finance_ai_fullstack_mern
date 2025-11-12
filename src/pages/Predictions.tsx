@@ -1,7 +1,9 @@
 // src/pages/Predictions.tsx
 
 import { useState, useRef, useEffect } from 'react';
+import Layout from '../components/Layout';
 import { getPredictions } from '../api';
+import { getUserFriendlyError } from '../utils/errorMessages';
 import { 
   fetchTransactions, 
   fetchCategories, 
@@ -236,7 +238,8 @@ const Predictions = () => {
       setMissingFields([]);
     } catch (err: any) {
       console.error('Error fetching data:', err);
-      setError(err.message || 'Failed to fetch expense data from backend.');
+      const friendlyError = getUserFriendlyError(err, 'Unable to load your expense data. Please try again.');
+      setError(friendlyError);
       setFormData(null);
     } finally {
       setFetchingData(false);
@@ -279,19 +282,13 @@ const Predictions = () => {
     } catch (err: any) {
       console.error('=== PREDICTION ERROR ===');
       console.error('Error:', err);
-      console.error('Error response:', err.response);
-      console.error('Error data:', err.response?.data);
       
-      let errorMessage = 'Failed to fetch predictions.';
+      // Use user-friendly error messages
+      let errorMessage = getUserFriendlyError(err, 'Unable to get predictions. Please try again.');
       
-      if (err.response?.status === 503) {
-        errorMessage = 'Prediction service is unavailable. Please ensure FastAPI is running on port 8000.';
-      } else if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.response?.data?.error) {
-        errorMessage = err.response.data.error;
-      } else if (err.message) {
-        errorMessage = err.message;
+      // Special handling for FastAPI service unavailable
+      if (err.response?.status === 503 || err.message?.includes('ECONNREFUSED')) {
+        errorMessage = 'Prediction service is currently unavailable. Please try again later or contact support.';
       }
       
       setError(errorMessage);
@@ -328,7 +325,8 @@ const Predictions = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <Layout>
+      <div className="space-y-6">
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-600 rounded-2xl shadow-2xl p-8 md:p-12 text-center">
         <div className="flex items-center justify-center mb-4">
@@ -363,15 +361,17 @@ const Predictions = () => {
 
       {/* Error Display */}
       {error && (
-        <div className="bg-gradient-to-r from-red-50 to-orange-50 border-l-4 border-red-500 rounded-lg p-5 shadow-lg">
+        <div className="bg-red-50 border-2 border-red-300 rounded-xl p-6 mb-6 animate-slideIn">
           <div className="flex items-start">
-            <AlertCircle className="w-6 h-6 text-red-600 mr-4 flex-shrink-0 mt-0.5" />
+            <div className="bg-red-100 p-2 rounded-full mr-4 flex-shrink-0">
+              <AlertCircle className="w-6 h-6 text-red-600" />
+            </div>
             <div className="flex-1">
-              <p className="text-red-800 font-bold text-lg mb-1">Error</p>
-              <p className="text-red-700 text-sm mb-2">{error}</p>
+              <h3 className="text-red-900 font-bold text-lg mb-2">Unable to Get Predictions</h3>
+              <p className="text-red-700 mb-4">{error}</p>
               {missingFields.length > 0 && (
-                <div className="mt-3">
-                  <p className="text-red-800 font-medium text-sm mb-2">Missing Fields:</p>
+                <div className="mt-3 mb-4">
+                  <p className="text-red-800 font-medium text-sm mb-2">Missing Required Categories:</p>
                   <ul className="list-disc list-inside text-red-700 text-sm space-y-1">
                     {missingFields.map(field => (
                       <li key={field}>{fieldLabels[field] || field}</li>
@@ -382,6 +382,24 @@ const Predictions = () => {
                   </p>
                 </div>
               )}
+              {error.includes('unavailable') && (
+                <p className="text-sm text-red-600 mb-3">
+                  💡 Tip: Make sure the prediction service is running. Check with your administrator.
+                </p>
+              )}
+              <button
+                onClick={() => {
+                  setError(null);
+                  if (formData) {
+                    handleGetPredictions();
+                  } else {
+                    fetchAndPopulateData();
+                  }
+                }}
+                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm font-medium"
+              >
+                Try Again
+              </button>
             </div>
           </div>
         </div>
@@ -534,7 +552,8 @@ const Predictions = () => {
           </ul>
         </div>
       )}
-    </div>
+      </div>
+    </Layout>
   );
 };
 

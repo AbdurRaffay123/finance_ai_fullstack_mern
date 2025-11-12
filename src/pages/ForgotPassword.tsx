@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Loader2 } from 'lucide-react';
+import { Mail, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { forgotPassword } from '../api';
+import { getContextualError } from '../utils/errorMessages';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -24,10 +25,11 @@ const ForgotPassword = () => {
           navigate('/verify-otp', { state: { email } });
         }, 2000);
       } else {
-        setError(response.message || 'Something went wrong. Please try again.');
+        setError(response.message || 'Unable to send password reset email. Please try again.');
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+      const friendlyError = getContextualError(err, 'forgotPassword');
+      setError(friendlyError);
     } finally {
       setLoading(false);
     }
@@ -87,7 +89,10 @@ const ForgotPassword = () => {
             </div>
 
             {error && (
-              <div className="text-red-600 text-sm text-center">{error}</div>
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start">
+                <AlertCircle className="w-5 h-5 text-red-600 mr-2 flex-shrink-0 mt-0.5" />
+                <p className="text-red-700 text-sm">{error}</p>
+              </div>
             )}
 
             <div>
