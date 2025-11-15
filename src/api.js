@@ -1,13 +1,13 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:5000/api',
   timeout: 10000,
 });
 
 // FastAPI client for AI predictions
 const fastApi = axios.create({
-  baseURL: 'http://localhost:8000',
+  baseURL: import.meta.env.VITE_FASTAPI_URL || 'http://localhost:8000',
   timeout: 10000,
 });
 

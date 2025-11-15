@@ -64,8 +64,9 @@ router.post('/predict', async (req, res) => {
 
     // Call FastAPI to get predictions
     try {
-      console.log('Calling FastAPI at http://localhost:8000/predict');
-      const fastApiResponse = await axios.post('http://localhost:8000/predict', userInputData, {
+      const fastApiUrl = process.env.FASTAPI_URL || 'http://localhost:8000';
+      console.log(`Calling FastAPI at ${fastApiUrl}/predict`);
+      const fastApiResponse = await axios.post(`${fastApiUrl}/predict`, userInputData, {
         timeout: 30000, // 30 second timeout
         headers: {
           'Content-Type': 'application/json'

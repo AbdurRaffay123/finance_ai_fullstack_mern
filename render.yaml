@@ -1,0 +1,59 @@
+services:
+  # Node.js Backend Service
+  - type: web
+    name: finance-backend
+    env: node
+    plan: free
+    buildCommand: cd Finance_backend && npm install
+    startCommand: cd Finance_backend && node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        value: 587
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: APP_NAME
+        value: FinanceAI
+      - key: FRONTEND_URL
+        sync: false
+      - key: FASTAPI_URL
+        sync: false
+
+  # React Frontend Service
+  - type: web
+    name: finance-frontend
+    env: static
+    buildCommand: npm install && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_URL
+        sync: false
+      - key: VITE_FASTAPI_URL
+        sync: false
+
+  # FastAPI Service
+  - type: web
+    name: finance-fastapi
+    env: python
+    plan: free
+    buildCommand: cd Finance_FastAPI && pip install -r requirements.txt
+    startCommand: cd Finance_FastAPI && uvicorn app:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: FRONTEND_URL
+        sync: false
+
