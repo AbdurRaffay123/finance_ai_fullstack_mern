@@ -97,6 +97,9 @@ export const getAIRecommendations = (financialData) =>
   api.post('/recommendations', financialData).then(res => res.data);
 
 // Password Reset APIs
+export const checkEmail = (email) => 
+  api.post('/auth/check-email', { email }).then(res => res.data);
+
 export const forgotPassword = (email) => 
   api.post('/auth/forgot-password', { email }).then(res => res.data);
 

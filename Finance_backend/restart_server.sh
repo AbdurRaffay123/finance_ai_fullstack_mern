@@ -1,17 +1,17 @@
 #!/bin/bash
-# Script to restart the backend server
 
-echo "Stopping existing server on port 5000..."
-lsof -ti:5000 | xargs kill -9 2>/dev/null || echo "No server found on port 5000"
+# Find and kill the process running on port 5000
+echo "Stopping server on port 5000..."
+PID=$(lsof -ti:5000)
+if [ ! -z "$PID" ]; then
+    kill $PID
+    sleep 2
+    echo "Server stopped."
+else
+    echo "No server running on port 5000."
+fi
 
-sleep 2
-
+# Start the server
 echo "Starting server..."
+cd "$(dirname "$0")"
 node server.js
-
-
-
-
-
-
-

@@ -96,9 +96,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Logo */}
             <div className="flex-shrink-0">
               <Link to="/dashboard" className="cursor-pointer">
-                <h1 className="text-2xl font-bold gradient-text">FinanceAI</h1>
+          <h1 className="text-2xl font-bold gradient-text">FinanceAI</h1>
               </Link>
-            </div>
+        </div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex md:items-center md:space-x-1 md:flex-1 md:justify-center">
@@ -312,13 +312,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </div>
                 )}
               </div>
-              <button
-                onClick={handleLogout}
+          <button
+            onClick={handleLogout}
                 className="px-4 py-2 rounded-lg text-sm font-medium text-accent-600 hover:bg-accent-50 hover:text-accent-700 transition-all duration-200 flex items-center"
-              >
+          >
                 <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </button>
+            Logout
+          </button>
               <LogoutModal
                 isOpen={showLogoutModal}
                 onClose={() => setShowLogoutModal(false)}

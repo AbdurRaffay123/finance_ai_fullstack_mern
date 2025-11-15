@@ -275,7 +275,7 @@ const Predictions = () => {
       // Validate payload has all required fields
       console.log('=== SENDING PREDICTION REQUEST ===');
       console.log('Payload:', JSON.stringify(payload, null, 2));
-      
+
       const res = await getPredictions(payload);
       console.log('Prediction response:', res);
       setPredictions(res.predictions);
@@ -421,12 +421,12 @@ const Predictions = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {Object.entries(formData).map(([key, value]) => {
               const label = fieldLabels[key] || key.replace(/_/g, ' ');
-              const isSelect = key === 'City_Tier' || key === 'Occupation';
-              
-              return (
+            const isSelect = key === 'City_Tier' || key === 'Occupation';
+
+            return (
                 <div key={key} className="bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-4 border border-primary-200">
                   <label className="block text-sm font-medium text-primary-600 mb-2">
-                    {label}
+                            {label}
                   </label>
                   <div className="flex items-center gap-2">
                     <div className="flex-1 bg-white rounded-lg px-4 py-3 border border-primary-200">
@@ -452,9 +452,9 @@ const Predictions = () => {
                       <AlertTriangle className="w-5 h-5 text-red-500" />
                     )}
                   </div>
-                </div>
-              );
-            })}
+              </div>
+            );
+          })}
           </div>
 
           <div className="flex justify-center">
@@ -500,37 +500,37 @@ const Predictions = () => {
       )}
 
       {/* Predictions Display */}
-      {predictions && (
-        <div
-          ref={predictionRef}
+        {predictions && (
+          <div
+            ref={predictionRef}
           className="bg-white rounded-2xl shadow-xl p-8 animate-slideIn"
-        >
+          >
           <h2 className="text-4xl font-extrabold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-teal-600 tracking-wide">
-            Predicted Potential Savings
-          </h2>
+              Predicted Potential Savings
+            </h2>
 
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-            {Object.entries(predictions).map(([key, value], idx, arr) => {
+  {Object.entries(predictions).map(([key, value], idx, arr) => {
     const label = key
       .replace('Potential_Savings_', '')
       .replace(/_/g, ' ');
 
-              const icons: Record<string, string> = {
-                Groceries: '🛒',
-                Transport: '🚗',
-                'Eating Out': '🍽️',
-                Entertainment: '🎬',
-                Utilities: '💡',
-                Miscellaneous: '📦',
-                Total_Predicted_Savings: '💰',
-              };
+    const icons: Record<string, string> = {
+      Groceries: '🛒',
+      Transport: '🚗',
+      'Eating Out': '🍽️',
+      Entertainment: '🎬',
+      Utilities: '💡',
+      Miscellaneous: '📦',
+      Total_Predicted_Savings: '💰',
+    };
 
-              const icon = icons[label] || '💵';
-              const isLast = idx === arr.length - 1;
+    const icon = icons[label] || '💵';
+    const isLast = idx === arr.length - 1;
 
-              return (
-                <li
-                  key={key}
+    return (
+      <li
+        key={key}
                   className={`bg-gradient-to-br from-primary-50 to-primary-100 rounded-xl p-6 border-l-4 ${
                     isLast ? 'border-emerald-500 col-span-2' : 'border-primary-500'
                   } shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1`}
@@ -546,12 +546,12 @@ const Predictions = () => {
                       </p>
                     </div>
                   </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
+      </li>
+    );
+  })}
+</ul>
+          </div>
+        )}
       </div>
     </Layout>
   );

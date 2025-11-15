@@ -10,7 +10,7 @@ const router = express.Router();
 // Signup Route
 router.post('/signup', async (req, res) => {
   try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
     // Validate input
     if (!email || !password) {
@@ -31,18 +31,18 @@ router.post('/signup', async (req, res) => {
     // Normalize email (lowercase)
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Check if user already exists
+  // Check if user already exists
     const userExists = await User.findOne({ email: normalizedEmail });
     if (userExists) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Create a new user
+  // Create a new user
     const user = new User({ email: normalizedEmail, password });
-    await user.save();
+  await user.save();
 
-    // Create JWT token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  // Create JWT token
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     res.status(201).json({ 
       token,
@@ -60,7 +60,7 @@ router.post('/signup', async (req, res) => {
 // Login Route
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+  const { email, password } = req.body;
 
     // Validate input
     if (!email || !password) {
@@ -70,20 +70,20 @@ router.post('/login', async (req, res) => {
     // Normalize email (lowercase)
     const normalizedEmail = email.toLowerCase().trim();
 
-    // Check if user exists
+  // Check if user exists
     const user = await User.findOne({ email: normalizedEmail });
     if (!user) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Compare password
-    const isMatch = await user.matchPassword(password);
+  // Compare password
+  const isMatch = await user.matchPassword(password);
     if (!isMatch) {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Create JWT token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+  // Create JWT token
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     res.status(200).json({ 
       token,
@@ -96,9 +96,55 @@ router.post('/login', async (req, res) => {
 });
 
 /**
+ * POST /auth/check-email
+ * Checks if email exists in database (for frontend validation)
+ * Returns specific response to allow frontend validation
+ */
+router.post('/check-email', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Validate email format
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ 
+        exists: false,
+        valid: false,
+        message: 'Please enter a valid email address.' 
+      });
+    }
+
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Check if user exists
+    const user = await User.findOne({ email: normalizedEmail });
+
+    if (!user) {
+      return res.status(200).json({ 
+        exists: false,
+        valid: true,
+        message: 'No account found with this email address. Please check your email or sign up.' 
+      });
+    }
+
+    return res.status(200).json({ 
+      exists: true,
+      valid: true,
+      message: 'Email verified. Proceeding to send OTP.' 
+    });
+  } catch (error) {
+    console.error('Error in check-email:', error);
+    res.status(500).json({ 
+      exists: false,
+      valid: false,
+      message: 'Unable to verify email. Please try again.' 
+    });
+  }
+});
+
+/**
  * POST /auth/forgot-password
  * Initiates password reset flow by sending OTP to user's email
- * Security: Returns generic success message to prevent email enumeration
+ * Now expects email to be pre-validated by frontend
  */
 router.post('/forgot-password', async (req, res) => {
   try {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
-import { forgotPassword } from '../api';
+import { checkEmail, forgotPassword } from '../api';
 import { getContextualError } from '../utils/errorMessages';
 
 const ForgotPassword = () => {
@@ -9,14 +9,57 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [checkingEmail, setCheckingEmail] = useState(false);
   const [error, setError] = useState('');
+
+  // Validate email format (including Gmail)
+  const isValidEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Check if it's a Gmail address (optional - can be any valid email)
+  const isGmailAccount = (email: string): boolean => {
+    const gmailRegex = /^[^\s@]+@gmail\.com$/i;
+    return gmailRegex.test(email);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    setLoading(true);
+    
+    // Step 1: Validate email format
+    if (!email || !email.trim()) {
+      setError('Please enter your email address.');
+      return;
+    }
 
+    if (!isValidEmail(email)) {
+      setError('Please enter a valid email address (e.g., yourname@gmail.com).');
+      return;
+    }
+
+    // Step 2: Check if email exists in database
+    setCheckingEmail(true);
     try {
+      const emailCheck = await checkEmail(email);
+      
+      if (!emailCheck.valid) {
+        setError(emailCheck.message || 'Invalid email format. Please enter a valid email address.');
+        setCheckingEmail(false);
+        return;
+      }
+
+      if (!emailCheck.exists) {
+        setError(emailCheck.message || 'No account found with this email address. Please check your email or sign up.');
+        setCheckingEmail(false);
+        return;
+      }
+
+      // Step 3: If email exists and is valid, proceed to send OTP
+      setCheckingEmail(false);
+      setLoading(true);
+
       const response = await forgotPassword(email);
       if (response.success) {
         setSubmitted(true);
@@ -32,6 +75,7 @@ const ForgotPassword = () => {
       setError(friendlyError);
     } finally {
       setLoading(false);
+      setCheckingEmail(false);
     }
   };
 
@@ -98,13 +142,18 @@ const ForgotPassword = () => {
             <div>
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || checkingEmail}
                 className="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {loading ? (
+                {checkingEmail ? (
                   <>
                     <Loader2 className="animate-spin h-4 w-4 mr-2" />
-                    Sending...
+                    Verifying email...
+                  </>
+                ) : loading ? (
+                  <>
+                    <Loader2 className="animate-spin h-4 w-4 mr-2" />
+                    Sending OTP...
                   </>
                 ) : (
                   'Send OTP'
