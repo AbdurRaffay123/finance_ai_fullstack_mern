@@ -57,3 +57,12 @@ test_*.js
 *_FILES_LIST.md
 *_INFO_NEEDED.md
 *_EXPLANATION.md
+AUTH_API_CHECK.md
+EMAIL_CLARIFICATION.md
+EMAIL_SETUP_EXPLANATION.md
+
+# Test/utility files
+set_token.html
+generate.js
+create_fresh_test_user.cjs
+*test*.cjs
