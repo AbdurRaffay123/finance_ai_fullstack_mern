@@ -11,7 +11,7 @@ MONGODB_URI=mongodb+srv://Abdur_Raffay:1donHEX%40GON@cluster0.hhyudfz.mongodb.ne
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 
 EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=587
+EMAIL_PORT=46
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASS=your-app-password
 EMAIL_FROM=FinanceAI <your-email@gmail.com>
