@@ -7,7 +7,7 @@ Copy these variables to your Render dashboard for each service.
 ```
 NODE_ENV=production
 PORT=10000
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/database?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://Abdur_Raffay:1donHEX%40GON@cluster0.hhyudfz.mongodb.net/finance_ai?retryWrites=true&w=majority
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 
 EMAIL_HOST=smtp.gmail.com
