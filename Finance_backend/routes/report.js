@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
-const PDFDocument = require('pdfkit');
+const XLSX = require('xlsx');
 const path = require('path');
 const fs = require('fs');
 const Report = require('../models/Report');
@@ -66,122 +66,126 @@ router.post('/generate', verifyToken, async (req, res) => {
       UserBudget.find({ userId: req.user.id }).sort({ currentMonth: -1 }).limit(1),
     ]);
 
-    // Create PDF doc
-    const doc = new PDFDocument({ margin: 30, size: 'A4' });
-    const fileName = `${Date.now()}-${reportName.replace(/\s+/g, '_')}.pdf`;
-    const filePath = path.join(__dirname, '..', 'public', 'reports', fileName);
+    // Create a new workbook
+    const workbook = XLSX.utils.book_new();
 
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    // Create Summary Sheet
+    const summaryData = [
+      ['Financial Report'],
+      [''],
+      ['Report Name:', reportName],
+      ['Report Type:', reportType],
+      ['Date Range:', `${startDate} to ${endDate}`],
+      ['Categories:', categories && categories.length > 0 ? categories.join(', ') : 'All'],
+      [''],
+      ['--- Expense Categories Overview ---'],
+    ];
 
-    const writeStream = fs.createWriteStream(filePath);
-    doc.pipe(writeStream);
-
-    // PDF Header
-    doc.fontSize(20).text('Financial Report', { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(14).text(`Report Name: ${reportName}`);
-    doc.text(`Report Type: ${reportType}`);
-    doc.text(`Date Range: ${startDate} to ${endDate}`);
-    if (categories && categories.length > 0) {
-      doc.text(`Selected Categories: ${categories.join(', ')}`);
-    } else {
-      doc.text('Categories: All');
-    }
-    doc.moveDown();
-
-    // Add comprehensive category information
-    doc.fontSize(12).text('--- Expense Categories Overview ---');
     if (allCategories.length > 0) {
+      summaryData.push(['Category Name', 'Budget', 'Spent Amount']);
       allCategories.forEach((cat) => {
-        doc.fontSize(10).text(`  • ${cat.name}: Budget $${cat.budget.toFixed(2)}, Spent $${(cat.spentAmount || 0).toFixed(2)}`);
+        summaryData.push([cat.name, cat.budget || 0, cat.spentAmount || 0]);
       });
     } else {
-      doc.fontSize(10).text('  No expense categories defined');
+      summaryData.push(['No expense categories defined']);
     }
-    doc.moveDown();
 
-    // Content by report type
+    summaryData.push(['']);
+    summaryData.push(['--- Budget Information ---']);
+    if (userBudgets.length > 0) {
+      const budget = userBudgets[0];
+      summaryData.push(['Monthly Budget:', budget.monthlyBudget || 0]);
+      summaryData.push(['Period:', budget.currentMonth || 'N/A']);
+    } else {
+      summaryData.push(['No budget information available']);
+    }
+
+    summaryData.push(['']);
+    summaryData.push(['--- Savings Goals Summary ---']);
+    if (allSavingsGoals.length > 0) {
+      summaryData.push(['Goal Name', 'Current Amount', 'Target Amount', 'Progress %']);
+      allSavingsGoals.forEach((goal) => {
+        const progress = goal.targetAmount > 0 ? ((goal.currentAmount / goal.targetAmount) * 100).toFixed(1) : 0;
+        summaryData.push([goal.name, goal.currentAmount, goal.targetAmount, `${progress}%`]);
+      });
+    } else {
+      summaryData.push(['No savings goals defined']);
+    }
+
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+
+    // Create report-specific sheets based on type
     if (reportType === 'monthly') {
       const monthlyTotals = {};
-
       transactions.forEach(tx => {
-        const month = tx.date.toISOString().slice(0,7); // YYYY-MM
+        const month = tx.date.toISOString().slice(0, 7); // YYYY-MM
         monthlyTotals[month] = (monthlyTotals[month] || 0) + tx.amount;
       });
 
-      doc.fontSize(16).text('Monthly Summary:');
+      const monthlyData = [['Month', 'Total Amount']];
       Object.entries(monthlyTotals).forEach(([month, total]) => {
-        doc.text(`${month}: $${total.toFixed(2)}`);
+        monthlyData.push([month, total]);
       });
+
+      const monthlySheet = XLSX.utils.aoa_to_sheet(monthlyData);
+      XLSX.utils.book_append_sheet(workbook, monthlySheet, 'Monthly Summary');
 
     } else if (reportType === 'category') {
       const categoryTotals = {};
-
       transactions.forEach(tx => {
         categoryTotals[tx.category] = (categoryTotals[tx.category] || 0) + tx.amount;
       });
 
-      doc.fontSize(16).text('Category Analysis:');
+      const categoryData = [['Category', 'Total Amount']];
       Object.entries(categoryTotals).forEach(([cat, total]) => {
-        doc.text(`${cat}: $${total.toFixed(2)}`);
+        categoryData.push([cat, total]);
       });
+
+      const categorySheet = XLSX.utils.aoa_to_sheet(categoryData);
+      XLSX.utils.book_append_sheet(workbook, categorySheet, 'Category Analysis');
 
     } else if (reportType === 'transactions') {
-      doc.fontSize(16).text('Transaction History:');
-      doc.moveDown();
+      const transactionData = [
+        ['Date', 'Category', 'Amount', 'Description']
+      ];
 
       transactions.forEach(tx => {
-        doc.fontSize(12).text(`${tx.date.toISOString().slice(0,10)} | ${tx.category} | $${tx.amount.toFixed(2)} | ${tx.description || '-'}`);
+        transactionData.push([
+          tx.date.toISOString().slice(0, 10),
+          tx.category,
+          tx.amount,
+          tx.description || '-'
+        ]);
       });
 
-    } else {
-      doc.text('Unknown report type');
+      const transactionSheet = XLSX.utils.aoa_to_sheet(transactionData);
+      XLSX.utils.book_append_sheet(workbook, transactionSheet, 'Transaction History');
     }
 
-    // Add Budget Information
-    doc.moveDown();
-    doc.fontSize(12).text('--- Budget Information ---');
-    if (userBudgets.length > 0) {
-      const budget = userBudgets[0];
-      doc.fontSize(10).text(`  Monthly Budget: $${budget.monthlyBudget.toFixed(2)}`);
-      doc.fontSize(10).text(`  Period: ${budget.currentMonth}`);
-    } else {
-      doc.fontSize(10).text('  No budget information available');
-    }
+    // Generate file name and path - ALWAYS Excel format
+    const fileName = `${Date.now()}-${reportName.replace(/\s+/g, '_')}.xlsx`;
+    const filePath = path.join(__dirname, '..', 'public', 'reports', fileName);
 
-    // Add Savings Goals Summary
-    doc.moveDown();
-    doc.fontSize(12).text('--- Savings Goals Summary ---');
-    if (allSavingsGoals.length > 0) {
-      allSavingsGoals.forEach((goal) => {
-        const progress = goal.targetAmount > 0 ? ((goal.currentAmount / goal.targetAmount) * 100).toFixed(1) : 0;
-        doc.fontSize(10).text(`  • ${goal.name}: $${goal.currentAmount.toFixed(2)} / $${goal.targetAmount.toFixed(2)} (${progress}%)`);
-      });
-    } else {
-      doc.fontSize(10).text('  No savings goals defined');
-    }
+    // Ensure directory exists
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
 
-    doc.end();
+    // Write Excel file
+    XLSX.writeFile(workbook, filePath);
 
-    writeStream.on('finish', async () => {
-      const report = new Report({
-        userId: req.user.id,
-        name: reportName,
-        type: reportType,
-        fileUrl: `/reports/${fileName}`,
-        status: 'completed',
-        date: new Date(),
-      });
-
-      await report.save();
-
-      res.status(201).json({ fileUrl: report.fileUrl });
+    // Save report record to database
+    const report = new Report({
+      userId: req.user.id,
+      name: reportName,
+      type: reportType,
+      fileUrl: `/reports/${fileName}`,
+      status: 'completed',
+      date: new Date(),
     });
 
-    writeStream.on('error', (err) => {
-      console.error('Error writing PDF file:', err);
-      res.status(500).json({ message: 'Failed to generate report' });
-    });
+    await report.save();
+
+    res.status(201).json({ fileUrl: report.fileUrl });
 
   } catch (err) {
     console.error('Report generation failed:', err);

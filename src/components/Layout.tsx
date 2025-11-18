@@ -17,6 +17,7 @@ import {
   Shield,
   Sparkles,
   TrendingUp,
+  Receipt,
 } from 'lucide-react';
 import LogoutModal from './LogoutModal';
 
@@ -83,7 +84,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const isActive = (path: string) => location.pathname === path;
   const isTransactionsActive = isActive('/add-transaction') || isActive('/transaction-history');
-  const isFinanceActive = isActive('/budget-management') || isActive('/savings') || isActive('/reports');
+  const isFinanceActive = isActive('/expenses') || isActive('/budget-management') || isActive('/savings') || isActive('/reports');
   const isAIInsightsActive = isActive('/recommendations') || isActive('/predictions');
   const isSettingsActive = isActive('/profile') || isActive('/security');
 
@@ -179,6 +180,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 </button>
                 {financeDropdownOpen && (
                   <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-primary-200 py-1 z-50">
+                    <Link
+                      to="/expenses"
+                      className={`flex items-center px-4 py-2 text-sm transition-colors ${
+                        isActive('/expenses')
+                          ? 'bg-primary-50 text-primary-600'
+                          : 'text-primary-700 hover:bg-primary-50'
+                      }`}
+                    >
+                      <Receipt className="w-4 h-4 mr-2" />
+                      Expenses
+                    </Link>
                     <Link
                       to="/budget-management"
                       className={`flex items-center px-4 py-2 text-sm transition-colors ${
@@ -390,6 +402,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               {/* Mobile Finance */}
               <div className="px-4 py-2">
                 <div className="text-xs font-semibold text-primary-500 uppercase mb-1">Finance</div>
+                <Link
+                  to="/expenses"
+                  className={`block px-4 py-2 rounded-lg text-sm ${
+                    isActive('/expenses')
+                      ? 'bg-primary-50 text-primary-600'
+                      : 'text-primary-700 hover:bg-primary-50'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <Receipt className="w-4 h-4 mr-2" />
+                    Expenses
+                  </div>
+                </Link>
                 <Link
                   to="/budget-management"
                   className={`block px-4 py-2 rounded-lg text-sm ${

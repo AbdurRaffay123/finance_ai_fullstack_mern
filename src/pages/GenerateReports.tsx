@@ -107,7 +107,7 @@ const loadRecentReports = async () => {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = fileUrl.split('/').pop() || 'report.pdf';
+      a.download = fileUrl.split('/').pop() || 'report.xlsx';
       document.body.appendChild(a);
       a.click();
       a.remove();

@@ -7,6 +7,10 @@
     "dev": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -23,6 +27,7 @@
     "multer": "^2.0.0",
     "nodemailer": "^7.0.10",
     "pdfkit": "^0.17.1",
+    "xlsx": "^0.18.5",
     "zxcvbn": "^4.4.2"
   }
 }
