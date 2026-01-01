@@ -1,13 +1,14 @@
-  import React, { useState, useEffect } from 'react';
-  import Layout from '../components/Layout';
-  import { User, Shield, Globe, Save, Check, XCircle } from 'lucide-react';
-  import { useCurrency, SUPPORTED_CURRENCIES } from '../contexts/CurrencyContext';
-  import {
-    fetchUserSettings,
-    updateUserSettings,
-    updateUserSecurity,
-    uploadProfilePhoto,
-  } from '../api';
+import React, { useState, useEffect } from 'react';
+import Layout from '../components/Layout';
+import { User, Shield, Globe, Save, Check, XCircle, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import Input from '../components/Input';
+import { useCurrency, SUPPORTED_CURRENCIES } from '../contexts/CurrencyContext';
+import {
+  fetchUserSettings,
+  updateUserSettings,
+  updateUserSecurity,
+  uploadProfilePhoto,
+} from '../api';
 
   const ProfileSettings = () => {
     const { currentCurrency, setCurrency, formatCurrency } = useCurrency();
@@ -18,6 +19,9 @@
     const [photoUploadError, setPhotoUploadError] = useState<string | null>(null);
     const [securityError, setSecurityError] = useState<string | null>(null);
     const [securitySuccess, setSecuritySuccess] = useState(false);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [settings, setSettings] = useState({
       profile: {
@@ -247,41 +251,34 @@
                   )}
 
                   <div className="grid grid-cols-1 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-primary-700">Full Name</label>
-                      <input
-                        type="text"
-                        name="fullName"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                        placeholder="John Doe"
-                        value={settings.profile.fullName}
-                        onChange={handleInputChange}
-                      />
-                    </div>
+                    <Input
+                      type="text"
+                      name="fullName"
+                      label="Full Name"
+                      leftIcon={User}
+                      placeholder="John Doe"
+                      value={settings.profile.fullName}
+                      onChange={handleInputChange}
+                    />
 
-                    <div>
-                      <label className="block text-sm font-medium text-primary-700">Email</label>
-                      <input
-                        type="email"
-                        name="email"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                        placeholder="john@example.com"
-                        value={settings.profile.email}
-                        onChange={handleInputChange}
-                      />
-                    </div>
+                    <Input
+                      type="email"
+                      name="email"
+                      label="Email"
+                      leftIcon={Mail}
+                      placeholder="john@example.com"
+                      value={settings.profile.email}
+                      onChange={handleInputChange}
+                    />
 
-                    <div>
-                      <label className="block text-sm font-medium text-primary-700">Phone Number</label>
-                      <input
-                        type="tel"
-                        name="phone"
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                        placeholder="+1 (555) 000-0000"
-                        value={settings.profile.phone}
-                        onChange={handleInputChange}
-                      />
-                    </div>
+                    <Input
+                      type="tel"
+                      name="phone"
+                      label="Phone Number"
+                      placeholder="+1 (555) 000-0000"
+                      value={settings.profile.phone}
+                      onChange={handleInputChange}
+                    />
                   </div>
                 </div>
               )}
@@ -351,53 +348,51 @@
                     </p>
                   )}
 
-                  <div>
-                    <label className="block text-sm font-medium text-primary-700">Email</label>
-                    <input
-                      type="email"
-                      name="email"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                      placeholder="your-email@example.com"
-                      value={security.email}
-                      onChange={handleSecurityChange}
-                    />
-                  </div>
+                  <Input
+                    type="email"
+                    name="email"
+                    label="Email"
+                    leftIcon={Mail}
+                    placeholder="your-email@example.com"
+                    value={security.email}
+                    onChange={handleSecurityChange}
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-primary-700">Current Password</label>
-                    <input
-                      type="password"
-                      name="currentPassword"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                      placeholder="Current password"
-                      value={security.currentPassword}
-                      onChange={handleSecurityChange}
-                    />
-                  </div>
+                  <Input
+                    type={showCurrentPassword ? "text" : "password"}
+                    name="currentPassword"
+                    label="Current Password"
+                    leftIcon={Lock}
+                    rightIcon={showCurrentPassword ? EyeOff : Eye}
+                    placeholder="Current password"
+                    value={security.currentPassword}
+                    onChange={handleSecurityChange}
+                    onRightIconClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-primary-700">New Password</label>
-                    <input
-                      type="password"
-                      name="newPassword"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                      placeholder="New password"
-                      value={security.newPassword}
-                      onChange={handleSecurityChange}
-                    />
-                  </div>
+                  <Input
+                    type={showNewPassword ? "text" : "password"}
+                    name="newPassword"
+                    label="New Password"
+                    leftIcon={Lock}
+                    rightIcon={showNewPassword ? EyeOff : Eye}
+                    placeholder="New password"
+                    value={security.newPassword}
+                    onChange={handleSecurityChange}
+                    onRightIconClick={() => setShowNewPassword(!showNewPassword)}
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-primary-700">Confirm New Password</label>
-                    <input
-                      type="password"
-                      name="confirmPassword"
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                      placeholder="Confirm new password"
-                      value={security.confirmPassword}
-                      onChange={handleSecurityChange}
-                    />
-                  </div>
+                  <Input
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    label="Confirm New Password"
+                    leftIcon={Lock}
+                    rightIcon={showConfirmPassword ? EyeOff : Eye}
+                    placeholder="Confirm new password"
+                    value={security.confirmPassword}
+                    onChange={handleSecurityChange}
+                    onRightIconClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  />
 
                   <button
                     onClick={handleSaveSecurity}
