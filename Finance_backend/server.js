@@ -55,8 +55,11 @@ if (!MONGODB_URI) {
 }
 
 mongoose.connect(MONGODB_URI, {
-  serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+  serverSelectionTimeoutMS: 30000, // Timeout after 30s (increased from 5s)
   socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
+  connectTimeoutMS: 30000, // Connection timeout
+  retryWrites: true,
+  w: 'majority'
 })
   .then(() => {
     console.log("✅ MongoDB Atlas connected successfully");
@@ -70,12 +73,30 @@ mongoose.connect(MONGODB_URI, {
     console.error("   2. Network connectivity");
     console.error("   3. IP whitelist in MongoDB Atlas (allow 0.0.0.0/0 for all IPs)");
     console.error("   4. Database user credentials");
-    process.exit(1);
+    console.warn("⚠️  Server will continue running but database operations will fail");
+    // Don't exit - allow server to start and retry connection
   });
 
 // Handle connection events
 mongoose.connection.on('disconnected', () => {
   console.warn('⚠️  MongoDB Atlas disconnected');
+  console.log('🔄 Attempting to reconnect...');
+  // Auto-reconnect after 5 seconds
+  setTimeout(() => {
+    mongoose.connect(MONGODB_URI, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 30000,
+      retryWrites: true,
+      w: 'majority'
+    }).catch(err => {
+      console.error('❌ Reconnection failed:', err.message);
+    });
+  }, 5000);
+});
+
+mongoose.connection.on('reconnected', () => {
+  console.log('✅ MongoDB Atlas reconnected successfully');
 });
 
 mongoose.connection.on('error', (err) => {

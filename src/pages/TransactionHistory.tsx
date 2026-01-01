@@ -2,14 +2,17 @@ import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, ChevronDown, ChevronUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { useCurrency } from '../contexts/CurrencyContext';
 import api from '../api';
 
 const TransactionHistory = () => {
+  const { formatCurrency, convertToCurrentCurrency } = useCurrency();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortField, setSortField] = useState<string>('date');
   const [sortDirection, setSortDirection] = useState<string>('desc');
   const [transactions, setTransactions] = useState<any[]>([]);
+  const [convertedTransactions, setConvertedTransactions] = useState<any[]>([]);
 
   const navigate = useNavigate();
 
@@ -38,6 +41,17 @@ const TransactionHistory = () => {
     fetchTransactions();
   }, []);
 
+  // Convert transaction amounts to current currency
+  useEffect(() => {
+    if (transactions.length > 0) {
+      const converted = transactions.map(tx => ({
+        ...tx,
+        amount: convertToCurrentCurrency(tx.amount),
+      }));
+      setConvertedTransactions(converted);
+    }
+  }, [transactions, convertToCurrentCurrency]);
+
   // Static categories matching AddTransaction page
   const categories = ['All', 'Food & Dining', 'Transportation', 'Shopping', 'Entertainment', 'Bills & Utilities', 'Healthcare', 'Education', 'Travel', 'Groceries', 'Income', 'Gifts & Donations', 'Personal Care', 'Home & Garden', 'Insurance', 'Others'];
 
@@ -50,7 +64,7 @@ const TransactionHistory = () => {
     }
   };
 
-  const filteredTransactions = transactions.filter((transaction) => {
+  const filteredTransactions = convertedTransactions.filter((transaction) => {
     const searchLower = searchTerm.toLowerCase();
     const categoryMatch = selectedCategory === 'all' || transaction.category?.toLowerCase() === selectedCategory.toLowerCase();
     
@@ -207,7 +221,7 @@ const TransactionHistory = () => {
                           <ArrowDownRight className="w-4 h-4 text-red-500 mr-1" />
                         )}
                         <span className={transaction.amount > 0 ? 'text-primary-600' : 'text-red-600'}>
-                          ${Math.abs(transaction.amount).toFixed(2)}
+                          {formatCurrency(Math.abs(transaction.amount))}
                         </span>
                       </div>
                     </td>

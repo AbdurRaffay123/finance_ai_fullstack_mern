@@ -29,11 +29,10 @@ export const getUserFriendlyError = (error: any, defaultMessage: string = 'Somet
     // Map common backend errors to user-friendly messages
     const errorMappings: Record<string, string> = {
       'Invalid credentials': 'The email or password you entered is incorrect. Please try again.',
-      'User already exists': 'An account with this email already exists. Please use a different email or try logging in.',
+      'User already exists': 'This email is already registered. Please log in instead.',
       'Invalid email format': 'Please enter a valid email address.',
       'Password must be at least 6 characters long': 'Password must be at least 6 characters long.',
       'Email and password are required': 'Please fill in both email and password fields.',
-      'User already exists': 'This email is already registered. Please log in instead.',
       'Server error. Please try again.': 'We encountered an issue. Please try again in a moment.',
       'Internal Server Error': 'Something went wrong on our end. Please try again later.',
       'Network Error': 'Unable to connect to the server. Please check your internet connection.',

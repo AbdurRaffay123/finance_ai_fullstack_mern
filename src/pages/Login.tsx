@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import Input from '../components/Input';
 import api from '../api';
 import { getContextualError } from '../utils/errorMessages';
 
@@ -59,58 +60,29 @@ const Login = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="card py-8 px-4 sm:px-10 animate-fadeIn">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-primary-700">
-                Email address
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-primary-400" />
-                </div>
-                <input
-                  type="email"
-                  name="email"
-                  id="email"
-                  required
-                  className="input-focus block w-full pl-10 pr-3 py-2 sm:text-sm"
-                  placeholder="you@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
+            <Input
+              type="email"
+              name="email"
+              label="Email address"
+              leftIcon={Mail}
+              placeholder="you@example.com"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-primary-700">
-                Password
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-primary-400" />
-                </div>
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  id="password"
-                  required
-                  className="input-focus block w-full pl-10 pr-10 py-2 sm:text-sm"
-                  placeholder="••••••••"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
-                <button
-                  type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-primary-400 hover:text-primary-600" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-primary-400 hover:text-primary-600" />
-                  )}
-                </button>
-              </div>
-            </div>
+            <Input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              label="Password"
+              leftIcon={Lock}
+              rightIcon={showPassword ? EyeOff : Eye}
+              placeholder="••••••••"
+              value={formData.password}
+              onChange={handleChange}
+              onRightIconClick={() => setShowPassword(!showPassword)}
+              required
+            />
 
             {errorMessage && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 mt-4 flex items-start">

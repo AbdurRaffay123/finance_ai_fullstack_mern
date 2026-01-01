@@ -1,6 +1,7 @@
   import React, { useState, useEffect } from 'react';
   import Layout from '../components/Layout';
   import { User, Shield, Globe, Save, Check, XCircle } from 'lucide-react';
+  import { useCurrency, SUPPORTED_CURRENCIES } from '../contexts/CurrencyContext';
   import {
     fetchUserSettings,
     updateUserSettings,
@@ -9,6 +10,7 @@
   } from '../api';
 
   const ProfileSettings = () => {
+    const { currentCurrency, setCurrency, formatCurrency } = useCurrency();
     const [activeTab, setActiveTab] = useState('profile');
     const [isSaving, setIsSaving] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
@@ -25,7 +27,7 @@
         profilePhoto: '', // URL to profile photo
       },
       preferences: {
-        currency: 'USD',
+        currency: currentCurrency.code,
         language: 'English',
         theme: 'light',
       },
@@ -38,20 +40,8 @@
       confirmPassword: '',
     });
 
-    const currencies = [
-      { code: 'USD', symbol: '$', name: 'US Dollar' },
-      { code: 'EUR', symbol: '€', name: 'Euro' },
-      { code: 'GBP', symbol: '£', name: 'British Pound' },
-      { code: 'JPY', symbol: '¥', name: 'Japanese Yen' },
-      { code: 'AUD', symbol: 'A$', name: 'Australian Dollar' },
-      { code: 'CAD', symbol: 'C$', name: 'Canadian Dollar' },
-      { code: 'CHF', symbol: 'Fr', name: 'Swiss Franc' },
-      { code: 'CNY', symbol: '¥', name: 'Chinese Yuan' },
-      { code: 'INR', symbol: '₹', name: 'Indian Rupee' },
-      { code: 'NZD', symbol: 'NZ$', name: 'New Zealand Dollar' },
-      { code: 'SGD', symbol: 'S$', name: 'Singapore Dollar' },
-      { code: 'HKD', symbol: 'HK$', name: 'Hong Kong Dollar' },
-    ];
+    // Get supported currencies from context
+    const supportedCurrencies = Object.values(SUPPORTED_CURRENCIES);
 
     useEffect(() => {
       const loadSettings = async () => {
@@ -92,6 +82,11 @@
           [name]: value,
         },
       }));
+
+      // Update global currency if currency setting changed
+      if (name === 'currency') {
+        setCurrency(value);
+      }
     };
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -189,6 +184,7 @@
 
     const tabs = [
       { id: 'profile', label: 'Profile', icon: User },
+      { id: 'preferences', label: 'Preferences', icon: Globe },
       { id: 'security', label: 'Security', icon: Shield },
     ];
 
@@ -285,6 +281,55 @@
                         value={settings.profile.phone}
                         onChange={handleInputChange}
                       />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'preferences' && (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-lg font-medium text-primary-900 mb-4">Currency Preferences</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Choose your preferred currency for displaying financial data. All amounts will be converted and displayed in your selected currency.
+                    </p>
+
+                    <div className="grid grid-cols-1 gap-4 max-w-md">
+                      <div>
+                        <label className="block text-sm font-medium text-primary-700 mb-2">
+                          Display Currency
+                        </label>
+                        <select
+                          name="currency"
+                          value={settings.preferences.currency}
+                          onChange={handlePreferenceChange}
+                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                        >
+                          {supportedCurrencies.map((currency) => (
+                            <option key={currency.code} value={currency.code}>
+                              {currency.symbol} {currency.name} ({currency.code})
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h4 className="text-sm font-medium text-primary-900 mb-2">Current Selection</h4>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">{currentCurrency.symbol}</span>
+                          <div>
+                            <p className="font-medium text-primary-900">{currentCurrency.name}</p>
+                            <p className="text-sm text-gray-600">
+                              1 {currentCurrency.code} = {currentCurrency.rateToPKR} PKR
+                            </p>
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <p className="text-xs text-gray-500">
+                            Example: {formatCurrency(1000)} (1000 PKR in {currentCurrency.code})
+                          </p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
+import { useCurrency } from '../contexts/CurrencyContext';
 import {
   AreaChart,
   Area,
@@ -14,10 +15,10 @@ import {
   Cell,
 } from 'recharts';
 import { Plus, ArrowUpRight, ArrowDownRight, Target, Loader2, AlertCircle } from 'lucide-react';
-import { 
-  getDashboardStats, 
-  getMonthlySpending, 
-  getCategoryBreakdown, 
+import {
+  getDashboardStats,
+  getMonthlySpending,
+  getCategoryBreakdown,
   fetchSavingsGoals,
   fetchTransactions,
   getBudget
@@ -69,6 +70,7 @@ interface Budget {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { formatCurrency, convertToCurrentCurrency } = useCurrency();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -78,9 +80,72 @@ const Dashboard = () => {
   const [recentTransactions, setRecentTransactions] = useState<Transaction[]>([]);
   const [budget, setBudget] = useState<Budget | null>(null);
 
+  // Converted data for currency display
+  const [convertedStats, setConvertedStats] = useState<DashboardStats | null>(null);
+  const [convertedMonthlyData, setConvertedMonthlyData] = useState<MonthlyData[]>([]);
+  const [convertedCategoryData, setConvertedCategoryData] = useState<CategoryData[]>([]);
+  const [convertedSavingsGoals, setConvertedSavingsGoals] = useState<SavingsGoal[]>([]);
+  const [convertedRecentTransactions, setConvertedRecentTransactions] = useState<Transaction[]>([]);
+  const [convertedBudget, setConvertedBudget] = useState<Budget | null>(null);
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // Convert amounts to current currency when data or currency changes
+  useEffect(() => {
+    if (stats) {
+      setConvertedStats({
+        ...stats,
+        totalBalance: convertToCurrentCurrency(stats.totalBalance),
+        monthlySpending: convertToCurrentCurrency(stats.monthlySpending),
+      });
+    }
+
+    if (monthlyData.length > 0) {
+      setConvertedMonthlyData(
+        monthlyData.map(item => ({
+          ...item,
+          amount: convertToCurrentCurrency(item.amount),
+        }))
+      );
+    }
+
+    if (categoryData.length > 0) {
+      setConvertedCategoryData(
+        categoryData.map(item => ({
+          ...item,
+          value: convertToCurrentCurrency(item.value),
+        }))
+      );
+    }
+
+    if (savingsGoals.length > 0) {
+      setConvertedSavingsGoals(
+        savingsGoals.map(goal => ({
+          ...goal,
+          targetAmount: convertToCurrentCurrency(goal.targetAmount),
+          currentAmount: convertToCurrentCurrency(goal.currentAmount),
+        }))
+      );
+    }
+
+    if (recentTransactions.length > 0) {
+      setConvertedRecentTransactions(
+        recentTransactions.map(tx => ({
+          ...tx,
+          amount: convertToCurrentCurrency(tx.amount),
+        }))
+      );
+    }
+
+    if (budget) {
+      setConvertedBudget({
+        ...budget,
+        monthlyBudget: convertToCurrentCurrency(budget.monthlyBudget),
+      });
+    }
+  }, [stats, monthlyData, categoryData, savingsGoals, recentTransactions, budget, convertToCurrentCurrency]);
 
   const fetchDashboardData = async () => {
     try {
@@ -123,20 +188,15 @@ const Dashboard = () => {
     navigate('/budget-management');
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD'
-    }).format(amount);
-  };
+  // Currency formatting is now handled by useCurrency hook
 
   const getSavingsProgress = () => {
-    if (savingsGoals.length === 0) return { percentage: 0, totalTarget: 0, totalCurrent: 0 };
-    
-    const totalTarget = savingsGoals.reduce((sum, goal) => sum + goal.targetAmount, 0);
-    const totalCurrent = savingsGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
+    if (convertedSavingsGoals.length === 0) return { percentage: 0, totalTarget: 0, totalCurrent: 0 };
+
+    const totalTarget = convertedSavingsGoals.reduce((sum, goal) => sum + goal.targetAmount, 0);
+    const totalCurrent = convertedSavingsGoals.reduce((sum, goal) => sum + goal.currentAmount, 0);
     const percentage = totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0;
-    
+
     return { percentage, totalTarget, totalCurrent };
   };
 
@@ -218,18 +278,18 @@ const Dashboard = () => {
               <ArrowUpRight className="w-5 h-5 text-primary-500" />
             </div>
             <p className="text-2xl font-bold text-primary-900">
-              {stats ? formatCurrency(stats.totalBalance) : '$0.00'}
+              {convertedStats ? formatCurrency(convertedStats.totalBalance) : '$0.00'}
             </p>
             <div className="mt-2">
               <p className="text-sm text-primary-600">
-                {budget ? `of ${formatCurrency(budget.monthlyBudget)} budget` : 'No budget set'}
+                {convertedBudget ? `of ${formatCurrency(convertedBudget.monthlyBudget)} budget` : 'No budget set'}
               </p>
               {budget && stats && (
                 <div className="w-full bg-primary-200 rounded-full h-2 mt-2">
                   <div 
                     className="bg-gradient-primary h-2 rounded-full transition-all duration-500" 
                     style={{ 
-                      width: `${Math.min((stats.totalBalance / budget.monthlyBudget) * 100, 100)}%` 
+                      width: `${convertedStats && convertedBudget ? Math.min((convertedStats.totalBalance / convertedBudget.monthlyBudget) * 100, 100) : 0}%` 
                     }}
                   ></div>
                 </div>
@@ -240,17 +300,17 @@ const Dashboard = () => {
           <div className="card p-6 animate-fadeIn">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-sm font-medium text-secondary-600">Monthly Spending</h3>
-              {stats && stats.spendingChange < 0 ? (
+              {convertedStats && convertedStats.spendingChange < 0 ? (
                 <ArrowDownRight className="w-5 h-5 text-primary-500" />
               ) : (
                 <ArrowUpRight className="w-5 h-5 text-accent-500" />
               )}
             </div>
             <p className="text-2xl font-bold text-primary-900">
-              {stats ? formatCurrency(stats.monthlySpending) : '$0.00'}
+              {convertedStats ? formatCurrency(convertedStats.monthlySpending) : '$0.00'}
             </p>
             <p className={`text-sm mt-1 ${
-              stats && stats.spendingChange < 0 ? 'text-primary-600' : 'text-accent-600'
+              convertedStats && convertedStats.spendingChange < 0 ? 'text-primary-600' : 'text-accent-600'
             }`}>
               {stats ? `${stats.spendingChange > 0 ? '+' : ''}${stats.spendingChange.toFixed(1)}% from last month` : 'No data'}
             </p>

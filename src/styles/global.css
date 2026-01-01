@@ -64,10 +64,10 @@
   border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
-/* Custom input focus */
+/* Custom input focus - DEPRECATED: Use Input component instead */
 .input-focus {
   @apply border-gray-300 rounded-lg transition-all duration-200;
   @apply focus:ring-2 focus:ring-[#355070] focus:border-[#355070];
   @apply focus:outline-none;
-  padding: 7px;
+  /* Removed fixed padding - now handled by Input component */
 }
