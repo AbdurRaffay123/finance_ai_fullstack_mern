@@ -43,10 +43,11 @@ const AIRecommendations = () => {
   const fetchUserFinancialData = async () => {
     try {
       setFetchingData(true);
+      // Fetch current month budget only for AI recommendations
       const [transactions, categories, budget, savingsGoals] = await Promise.all([
         fetchTransactions(),
         fetchCategories(),
-        getBudget(),
+        getBudget(), // Current month budget only - no month parameter
         fetchSavingsGoals(),
       ]);
 

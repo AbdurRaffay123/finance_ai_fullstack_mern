@@ -86,9 +86,15 @@ export const getMonthlySpending = () => api.get('/transactions/monthly-spending'
 export const getCategoryBreakdown = () => api.get('/transactions/category-breakdown').then(res => res.data);
 
 // Budget APIs
-export const getBudget = () => api.get('/budget').then(res => res.data);
+export const getBudget = (month) => {
+  const url = month ? `/budget?month=${month}` : '/budget';
+  return api.get(url).then(res => res.data);
+};
 export const updateBudget = (budgetData) => api.put('/budget', budgetData).then(res => res.data);
-export const getBudgetHistory = () => api.get('/budget/history').then(res => res.data);
+export const getBudgetHistory = (limit) => {
+  const url = limit ? `/budget/history?limit=${limit}` : '/budget/history';
+  return api.get(url).then(res => res.data);
+};
 
 // Prediction APIs - Uses Node.js backend which proxies to FastAPI
 export const getPredictions = (userData) => api.post('/predict', userData).then(res => res.data);

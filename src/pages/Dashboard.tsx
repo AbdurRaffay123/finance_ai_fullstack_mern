@@ -14,7 +14,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { Plus, ArrowUpRight, ArrowDownRight, Target, Loader2, AlertCircle } from 'lucide-react';
+import { Plus, ArrowUpRight, ArrowDownRight, Target, Loader2, AlertCircle, Settings } from 'lucide-react';
 import {
   getDashboardStats,
   getMonthlySpending,
@@ -152,13 +152,14 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
       
+      // Fetch current month budget only (no month parameter = current month)
       const [statsData, monthlyData, categoryData, goalsData, transactionsData, budgetData] = await Promise.all([
         getDashboardStats(),
         getMonthlySpending(),
         getCategoryBreakdown(),
         fetchSavingsGoals(),
         fetchTransactions(),
-        getBudget()
+        getBudget() // Current month budget only - no month parameter
       ]);
       
       setStats(statsData);
@@ -186,6 +187,10 @@ const Dashboard = () => {
 
   const handleBudgetManagementClick = () => {
     navigate('/budget-management');
+  };
+
+  const handleManageCategoriesClick = () => {
+    navigate('/expenses');
   };
 
   // Currency formatting is now handled by useCurrency hook
@@ -386,23 +391,38 @@ const Dashboard = () => {
           </div>
 
           <div className="card p-6 animate-slideIn">
-            <h3 className="text-lg font-semibold text-primary-900 mb-4">Expense Categories</h3>
-            <div className="h-80">
-              {categoryData.length > 0 ? (
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-primary-900">Expense Categories</h3>
+              <button
+                onClick={handleManageCategoriesClick}
+                className="text-primary-600 hover:text-primary-700 p-1 rounded-full hover:bg-primary-100 transition-colors"
+                title="Manage Categories"
+              >
+                <Settings className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="h-64">
+              {convertedCategoryData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={categoryData}
+                      data={convertedCategoryData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
+                      innerRadius={50}
+                      outerRadius={75}
                       fill="#355070"
-                      paddingAngle={5}
+                      paddingAngle={3}
                       dataKey="value"
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      labelLine={false}
                     >
-                      {categoryData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      {convertedCategoryData.map((_, index) => (
+                        <Cell 
+                          key={`cell-${index}`} 
+                          fill={COLORS[index % COLORS.length]}
+                          className="cursor-pointer hover:opacity-80 transition-opacity"
+                        />
                       ))}
                     </Pie>
                     <Tooltip 
@@ -417,23 +437,66 @@ const Dashboard = () => {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="flex items-center justify-center h-full text-primary-500">
-                  <p>No category data available</p>
+                <div className="flex flex-col items-center justify-center h-full text-primary-500">
+                  <p className="mb-3">No category data available</p>
+                  <button 
+                    onClick={handleManageCategoriesClick}
+                    className="btn-secondary text-sm"
+                  >
+                    Add Categories
+                  </button>
                 </div>
               )}
             </div>
-            {categoryData.length > 0 && (
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                {categoryData.map((item, index) => (
-                  <div key={item.name} className="flex items-center">
-                    <div
-                      className="w-3 h-3 rounded-full mr-2"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    ></div>
-                    <span className="text-sm text-primary-700">{item.name}</span>
+            
+            {/* Category Legend with Amounts */}
+            {convertedCategoryData.length > 0 && (
+              <>
+                <div className="border-t border-primary-200 mt-4 pt-4">
+                  <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto">
+                    {convertedCategoryData.map((item, index) => {
+                      const total = convertedCategoryData.reduce((sum, cat) => sum + cat.value, 0);
+                      const percentage = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0';
+                      return (
+                        <div 
+                          key={item.name} 
+                          className="flex items-center justify-between p-2 rounded-lg hover:bg-primary-50 transition-colors cursor-pointer"
+                          onClick={handleManageCategoriesClick}
+                        >
+                          <div className="flex items-center">
+                            <div
+                              className="w-3 h-3 rounded-full mr-3 flex-shrink-0"
+                              style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                            ></div>
+                            <span className="text-sm font-medium text-primary-800">{item.name}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-sm font-semibold text-primary-900">{formatCurrency(item.value)}</span>
+                            <span className="text-xs text-primary-500 ml-2">({percentage}%)</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
-              </div>
+                </div>
+                
+                {/* Total and Action Button */}
+                <div className="border-t border-primary-200 mt-3 pt-3">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-primary-700">Total Spending</span>
+                    <span className="text-lg font-bold text-primary-900">
+                      {formatCurrency(convertedCategoryData.reduce((sum, cat) => sum + cat.value, 0))}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleManageCategoriesClick}
+                    className="w-full btn-secondary flex items-center justify-center text-sm"
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Manage Categories
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>

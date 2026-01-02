@@ -110,11 +110,11 @@ const Predictions = () => {
       setMissingFields([]);
       setPredictions(null);
 
-      // Fetch all required data
+      // Fetch all required data - using current month budget only
       const [transactions, categories, budget, savingsGoals, userSettings] = await Promise.all([
         fetchTransactions(),
         fetchCategories(),
-        getBudget(),
+        getBudget(), // Current month budget only - no month parameter
         fetchSavingsGoals(),
         fetchUserSettings().catch(() => null), // Optional
       ]);

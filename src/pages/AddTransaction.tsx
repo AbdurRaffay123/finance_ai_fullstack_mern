@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
-import { Calendar, DollarSign, Tag, FileText } from 'lucide-react';
+import { Calendar, Tag, FileText } from 'lucide-react';
 import api from '../api';
+import Input from '../components/Input';
+import CurrencyInput from '../components/CurrencyInput';
 
 // Static list of transaction categories (independent from expenses)
 const TRANSACTION_CATEGORIES = [
@@ -87,35 +89,31 @@ const AddTransaction = () => {
         <h1 className="text-2xl font-bold text-primary-900 mb-6 animate-fadeIn">Add New Transaction</h1>
 
         <form onSubmit={handleSubmit} className="card p-6 space-y-6 animate-slideIn">
-          <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-primary-700 mb-2">
-              Amount
-            </label>
-            <div className="relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <DollarSign className="h-5 w-5 text-primary-400" />
-              </div>
-              <input
-                type="number"
-                name="amount"
-                id="amount"
-                required
-                step="0.01"
-                min="0"
-                className="input-focus block w-full pl-10 pr-3 py-2"
-                placeholder="0.00"
-                value={transaction.amount}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
+          <CurrencyInput
+            label="Amount"
+            name="amount"
+            valueInPKR={parseFloat(transaction.amount) || 0}
+            onChange={(e) => {
+              const syntheticEvent = {
+                ...e,
+                target: {
+                  ...e.target,
+                  name: 'amount',
+                },
+              } as React.ChangeEvent<HTMLInputElement>;
+              handleChange(syntheticEvent);
+            }}
+            required
+            step="0.01"
+            min="0"
+          />
 
           <div>
             <label htmlFor="category" className="block text-sm font-medium text-primary-700 mb-2">
               Category <span className="text-red-500">*</span>
             </label>
             <div className="relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
                 <Tag className="h-5 w-5 text-primary-400" />
               </div>
               <select
@@ -137,39 +135,31 @@ const AddTransaction = () => {
             </div>
           </div>
 
-          <div>
-            <label htmlFor="date" className="block text-sm font-medium text-primary-700 mb-2">
-              Date <span className="text-red-500">*</span>
-            </label>
-            <div className="relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Calendar className="h-5 w-5 text-primary-400" />
-              </div>
-              <input
-                type="date"
-                name="date"
-                id="date"
-                required
-                className="input-focus block w-full pl-10 pr-3 py-2"
-                value={transaction.date}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
+          <Input
+            type="date"
+            name="date"
+            label="Date"
+            leftIcon={Calendar}
+            required
+            value={transaction.date}
+            onChange={handleChange}
+          />
 
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-primary-700 mb-2">
               Description <span className="text-gray-400 text-xs">(Optional)</span>
             </label>
             <div className="relative rounded-md shadow-sm">
-              <div className="absolute top-3 left-3 pointer-events-none">
-                <FileText className="h-5 w-5 text-primary-400" />
-              </div>
+              {!transaction.description && (
+                <div className="absolute top-3 left-3 pointer-events-none z-10 transition-opacity duration-200">
+                  <FileText className="h-5 w-5 text-primary-400" />
+                </div>
+              )}
               <textarea
                 name="description"
                 id="description"
                 rows={3}
-                className="input-focus block w-full pl-10 pr-3 py-2"
+                className={`input-focus block w-full ${transaction.description ? 'pl-3' : 'pl-11'} pr-3 py-2 transition-all duration-200 rounded-lg border border-gray-300 focus:border-primary-500 focus:ring-primary-500 focus:outline-none focus:ring-2`}
                 placeholder="Add a note about this transaction..."
                 value={transaction.description}
                 onChange={handleChange}

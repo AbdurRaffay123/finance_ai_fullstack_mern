@@ -1,5 +1,6 @@
 import React, { forwardRef } from 'react';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { convertToPKR } from '../utils/currencyUtils';
 import Input from './Input';
 
 interface CurrencyInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> {
@@ -42,17 +43,21 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(({
   // Handle input changes by converting back to PKR
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (onChange) {
-      // Convert the input value back to PKR for storage
+      // Get the input value (in current currency)
       const inputValue = parseFloat(e.target.value) || 0;
+      
+      // Convert from current currency back to PKR
+      const valueInPKR = convertToPKR(inputValue, currentCurrency.code);
+      
       // Create a synthetic event with the PKR value
       const syntheticEvent = {
         ...e,
         target: {
           ...e.target,
-          value: inputValue.toString(),
+          value: valueInPKR.toString(),
           name: e.target.name,
         },
-      };
+      } as React.ChangeEvent<HTMLInputElement>;
       onChange(syntheticEvent);
     }
   };

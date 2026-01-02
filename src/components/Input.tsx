@@ -40,6 +40,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
   onRightIconClick,
   className = '',
   id,
+  value,
   ...props
 }, ref) => {
   // Size configurations
@@ -66,19 +67,31 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
 
   const config = sizeConfig[size];
 
+  // Check if input has a value (for hiding icons when typing)
+  const hasValue = value !== undefined && value !== null && value !== '';
+  const isPasswordField = props.type === 'password' || props.type === 'text' && rightIcon; // Password toggle should always show
+  const showLeftIcon = leftIcon && !hasValue;
+  const showRightIcon = rightIcon && (isPasswordField || !hasValue); // Always show for password toggle
+  const showPrefix = prefix && !leftIcon && !hasValue;
+  const showSuffix = suffix && !rightIcon && !hasValue;
+
   // Calculate padding based on icons and prefix/suffix
+  // When value exists, icons are hidden, so use normal padding
+  // Add extra padding when icons are shown to prevent placeholder overlap
   const getPaddingClasses = () => {
     let leftPadding = '';
     let rightPadding = '';
 
-    if (leftIcon || prefix) {
-      leftPadding = size === 'sm' ? 'pl-9' : size === 'lg' ? 'pl-12' : 'pl-10';
+    if (showLeftIcon || showPrefix) {
+      // Increased padding to prevent placeholder text from overlapping with icon
+      leftPadding = size === 'sm' ? 'pl-10' : size === 'lg' ? 'pl-14' : 'pl-11';
     } else {
       leftPadding = size === 'sm' ? 'pl-3' : size === 'lg' ? 'pl-4' : 'pl-3';
     }
 
-    if (rightIcon || suffix) {
-      rightPadding = size === 'sm' ? 'pr-9' : size === 'lg' ? 'pr-12' : 'pr-10';
+    if (showRightIcon || showSuffix) {
+      // Increased padding to prevent placeholder text from overlapping with icon
+      rightPadding = size === 'sm' ? 'pr-10' : size === 'lg' ? 'pr-14' : 'pr-11';
     } else {
       rightPadding = size === 'sm' ? 'pr-3' : size === 'lg' ? 'pr-4' : 'pr-3';
     }
@@ -102,9 +115,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
 
       {/* Input Container */}
       <div className="relative">
-        {/* Left Icon */}
-        {leftIcon && (
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+        {/* Left Icon - Only show when input is empty */}
+        {showLeftIcon && (
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10 transition-opacity duration-200">
             {React.isValidElement(leftIcon) ? (
               leftIcon
             ) : (
@@ -115,9 +128,9 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
           </div>
         )}
 
-        {/* Left Text Prefix */}
-        {prefix && !leftIcon && (
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10">
+        {/* Left Text Prefix - Only show when input is empty */}
+        {showPrefix && (
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none z-10 transition-opacity duration-200">
             <span className={`${config.prefix} text-primary-400 font-medium`}>
               {prefix}
             </span>
@@ -128,6 +141,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
         <input
           ref={ref}
           id={inputId}
+          value={value}
           className={`
             block w-full rounded-lg border transition-all duration-200
             ${config.input}
@@ -139,22 +153,23 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
             focus:outline-none focus:ring-2
             disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed
             placeholder:text-gray-400
+            ${(showLeftIcon || showPrefix) ? 'placeholder:pl-0' : ''}
             ${className}
           `}
           {...props}
         />
 
-        {/* Right Text Suffix */}
-        {suffix && !rightIcon && (
-          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none z-10">
+        {/* Right Text Suffix - Only show when input is empty */}
+        {showSuffix && (
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none z-10 transition-opacity duration-200">
             <span className={`${config.prefix} text-primary-400 font-medium`}>
               {suffix}
             </span>
           </div>
         )}
 
-        {/* Right Icon */}
-        {rightIcon && (
+        {/* Right Icon - Always show for password toggle, otherwise hide when has value */}
+        {rightIcon && showRightIcon && (
           <button
             type="button"
             className="absolute inset-y-0 right-0 pr-3 flex items-center z-10 hover:text-primary-600 transition-colors"

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import CurrencyInput from '../components/CurrencyInput';
 
 interface CategoryModalProps {
   visible: boolean;
@@ -96,26 +97,18 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
               required
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Monthly Budget</label>
-            <div className="mt-1 relative rounded-md shadow-sm">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <span className="text-gray-500 sm:text-sm">$</span>
-              </div>
-              <input
-                type="number"
-                className="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
-                placeholder="0.00"
-                min={0}
-                step="0.01"
-                value={budget !== '' ? budget : ''}
-                onChange={(e) =>
-                  setBudget(e.target.value === '' ? '' : parseFloat(e.target.value))
-                }
-                required
-              />
-            </div>
-          </div>
+          <CurrencyInput
+            label="Monthly Budget"
+            valueInPKR={budget !== '' ? (typeof budget === 'number' ? budget : parseFloat(budget.toString())) : 0}
+            onChange={(e) => {
+              const value = e.target.value;
+              setBudget(value === '' ? '' : parseFloat(value));
+            }}
+            required
+            min="0"
+            step="0.01"
+            containerClassName=""
+          />
           <div className="flex justify-end space-x-3 mt-6">
             <button
               type="button"

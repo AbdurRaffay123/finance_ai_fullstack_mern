@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Loader2, AlertCircle, CheckCircle } from 'lucide-react';
 import { checkEmail, forgotPassword } from '../api';
 import { getContextualError } from '../utils/errorMessages';
+import Input from '../components/Input';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -110,27 +111,17 @@ const ForgotPassword = () => {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <div className="mt-1 relative rounded-md shadow-sm">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  className="block w-full pl-10 sm:text-sm border-gray-300 rounded-md focus:ring-emerald-500 focus:border-emerald-500"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
-            </div>
+            <Input
+              type="email"
+              name="email"
+              label="Email address"
+              leftIcon={Mail}
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
 
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-start">

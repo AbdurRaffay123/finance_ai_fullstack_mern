@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { KeyRound, Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { KeyRound, Loader2, Eye, EyeOff, AlertCircle, Lock } from 'lucide-react';
 import { resetPassword } from '../api';
 import { getContextualError } from '../utils/errorMessages';
+import Input from '../components/Input';
 
 const CreateNewPassword = () => {
   const navigate = useNavigate();
@@ -103,34 +104,21 @@ const CreateNewPassword = () => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              New Password
-            </label>
-            <div className="mt-1 relative">
-              <input
-                type={showPassword ? "text" : "password"}
-                id="password"
-                value={password}
-                onChange={(e) => {
-                  setPassword(e.target.value);
-                  if (error) setError('');
-                }}
-                className="block w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Enter your new password (min 6 characters)"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                ) : (
-                  <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                )}
-              </button>
-            </div>
+            <Input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              label="New Password"
+              leftIcon={Lock}
+              rightIcon={showPassword ? EyeOff : Eye}
+              onRightIconClick={() => setShowPassword(!showPassword)}
+              placeholder="Enter your new password (min 6 characters)"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError('');
+              }}
+              required
+            />
             {password && (
               <p className="mt-1 text-xs text-gray-500">
                 {password.length < 6 ? (
@@ -143,34 +131,21 @@ const CreateNewPassword = () => {
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-              Confirm New Password
-            </label>
-            <div className="mt-1 relative">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  if (error) setError('');
-                }}
-                className="block w-full px-4 py-3 pr-10 rounded-lg border border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                placeholder="Confirm your new password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-              >
-                {showConfirmPassword ? (
-                  <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                ) : (
-                  <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                )}
-              </button>
-            </div>
+            <Input
+              type={showConfirmPassword ? "text" : "password"}
+              name="confirmPassword"
+              label="Confirm New Password"
+              leftIcon={Lock}
+              rightIcon={showConfirmPassword ? EyeOff : Eye}
+              onRightIconClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              placeholder="Confirm your new password"
+              value={confirmPassword}
+              onChange={(e) => {
+                setConfirmPassword(e.target.value);
+                if (error) setError('');
+              }}
+              required
+            />
             {confirmPassword && password && (
               <p className="mt-1 text-xs">
                 {password === confirmPassword ? (

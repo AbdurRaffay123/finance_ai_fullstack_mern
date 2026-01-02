@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { Shield, Check, XCircle } from 'lucide-react';
+import { Shield, Check, XCircle, Mail, Lock } from 'lucide-react';
 import {
   fetchUserSettings,
   updateUserSecurity,
 } from '../api';
+import Input from '../components/Input';
 
 const Security = () => {
   const [isSaving, setIsSaving] = useState(false);
@@ -101,53 +102,45 @@ const Security = () => {
                 </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-primary-700 mb-1">Email</label>
-                <input
-                  type="email"
-                  name="email"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-3 py-2"
-                  placeholder="your-email@example.com"
-                  value={security.email}
-                  onChange={handleSecurityChange}
-                />
-              </div>
+              <Input
+                type="email"
+                name="email"
+                label="Email"
+                leftIcon={Mail}
+                placeholder="your-email@example.com"
+                value={security.email}
+                onChange={handleSecurityChange}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-primary-700 mb-1">Current Password</label>
-                <input
-                  type="password"
-                  name="currentPassword"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-3 py-2"
-                  placeholder="Current password"
-                  value={security.currentPassword}
-                  onChange={handleSecurityChange}
-                />
-              </div>
+              <Input
+                type="password"
+                name="currentPassword"
+                label="Current Password"
+                leftIcon={Lock}
+                placeholder="Current password"
+                value={security.currentPassword}
+                onChange={handleSecurityChange}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-primary-700 mb-1">New Password</label>
-                <input
-                  type="password"
-                  name="newPassword"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-3 py-2"
-                  placeholder="New password (min 6 characters)"
-                  value={security.newPassword}
-                  onChange={handleSecurityChange}
-                />
-              </div>
+              <Input
+                type="password"
+                name="newPassword"
+                label="New Password"
+                leftIcon={Lock}
+                placeholder="New password (min 6 characters)"
+                value={security.newPassword}
+                onChange={handleSecurityChange}
+              />
 
-              <div>
-                <label className="block text-sm font-medium text-primary-700 mb-1">Confirm New Password</label>
-                <input
-                  type="password"
-                  name="confirmPassword"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-3 py-2"
-                  placeholder="Confirm new password"
-                  value={security.confirmPassword}
-                  onChange={handleSecurityChange}
-                />
-              </div>
+              <Input
+                type="password"
+                name="confirmPassword"
+                label="Confirm New Password"
+                leftIcon={Lock}
+                placeholder="Confirm new password"
+                value={security.confirmPassword}
+                onChange={handleSecurityChange}
+              />
 
               <button
                 onClick={handleSaveSecurity}

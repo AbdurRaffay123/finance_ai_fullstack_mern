@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { User, Save, Check, XCircle } from 'lucide-react';
+import { User, Save, Check, XCircle, Mail, Phone } from 'lucide-react';
 import {
   fetchUserSettings,
   updateUserSettings,
   uploadProfilePhoto,
 } from '../api';
+import Input from '../components/Input';
 
 const Profile = () => {
   const [isSaving, setIsSaving] = useState(false);
@@ -137,41 +138,35 @@ const Profile = () => {
               )}
 
               <div className="grid grid-cols-1 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-primary-700 mb-1">Full Name</label>
-                  <input
-                    type="text"
-                    name="fullName"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-3 py-2"
-                    placeholder="John Doe"
-                    value={settings.profile.fullName}
-                    onChange={handleInputChange}
-                  />
-                </div>
+                <Input
+                  type="text"
+                  name="fullName"
+                  label="Full Name"
+                  leftIcon={User}
+                  placeholder="John Doe"
+                  value={settings.profile.fullName}
+                  onChange={handleInputChange}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-primary-700 mb-1">Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-3 py-2"
-                    placeholder="john@example.com"
-                    value={settings.profile.email}
-                    onChange={handleInputChange}
-                  />
-                </div>
+                <Input
+                  type="email"
+                  name="email"
+                  label="Email"
+                  leftIcon={Mail}
+                  placeholder="john@example.com"
+                  value={settings.profile.email}
+                  onChange={handleInputChange}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-primary-700 mb-1">Phone Number</label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 px-3 py-2"
-                    placeholder="+1 (555) 000-0000"
-                    value={settings.profile.phone}
-                    onChange={handleInputChange}
-                  />
-                </div>
+                <Input
+                  type="tel"
+                  name="phone"
+                  label="Phone Number"
+                  leftIcon={Phone}
+                  placeholder="+1 (555) 000-0000"
+                  value={settings.profile.phone}
+                  onChange={handleInputChange}
+                />
               </div>
             </div>
           </div>

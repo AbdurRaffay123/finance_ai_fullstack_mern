@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Plus, ChevronDown, ChevronUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useCurrency } from '../contexts/CurrencyContext';
 import api from '../api';
+import Input from '../components/Input';
 
 const TransactionHistory = () => {
   const { formatCurrency, convertToCurrentCurrency } = useCurrency();
@@ -111,18 +112,14 @@ const TransactionHistory = () => {
         {/* Filters */}
         <div className="card p-4 animate-slideIn">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-5 w-5 text-primary-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search transactions..."
-                className="input-focus pl-10 block w-full"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
+            <Input
+              type="text"
+              placeholder="Search transactions..."
+              leftIcon={Search}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              containerClassName=""
+            />
 
             <div>
               <select
