@@ -70,6 +70,10 @@ export const uploadProfilePhoto = (file) => {
   }).then(res => res.data);
 };
 
+// Change Password API - Secure password change endpoint
+export const changePassword = (passwordData) => 
+  api.put('/user/change-password', passwordData).then(res => res.data);
+
 // Transaction APIs
 export const fetchTransactions = () => api.get('/transactions').then(res => res.data);
 export const addTransaction = (transaction) => api.post('/transactions', transaction).then(res => res.data);

@@ -116,6 +116,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 // Register userSettings routes under /api/userSettings
 app.use('/api/userSettings', userSettingsRoutes);
 
+// Register change password routes under /api/user
+const changePasswordRoutes = require('./routes/changePassword');
+app.use('/api/user', changePasswordRoutes);
+
 // Use the prediction routes for handling POST requests
 app.use('/api', predictionRoutes);
 

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { User, Shield, Globe, Save, Check, XCircle, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Shield, Globe, Save, Check, XCircle, Mail } from 'lucide-react';
 import Input from '../components/Input';
+import ChangePassword from '../components/ChangePassword';
 import { useCurrency, SUPPORTED_CURRENCIES } from '../contexts/CurrencyContext';
 import {
   fetchUserSettings,
   updateUserSettings,
-  updateUserSecurity,
   uploadProfilePhoto,
 } from '../api';
 
@@ -17,11 +17,6 @@ import {
     const [saveSuccess, setSaveSuccess] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const [photoUploadError, setPhotoUploadError] = useState<string | null>(null);
-    const [securityError, setSecurityError] = useState<string | null>(null);
-    const [securitySuccess, setSecuritySuccess] = useState(false);
-    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
-    const [showNewPassword, setShowNewPassword] = useState(false);
-    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const [settings, setSettings] = useState({
       profile: {
@@ -37,12 +32,6 @@ import {
       },
     });
 
-    const [security, setSecurity] = useState({
-      email: '',
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    });
 
     // Get supported currencies from context
     const supportedCurrencies = Object.values(SUPPORTED_CURRENCIES);
@@ -66,10 +55,6 @@ import {
               theme: data.preferences.theme || 'light',
             },
           });
-          setSecurity((prev) => ({
-            ...prev,
-            email: data.profile.email || '',
-          }));
         } catch (error) {
           console.error('Failed to load user settings', error);
         }
@@ -101,14 +86,6 @@ import {
           ...prev.profile,
           [name]: value,
         },
-      }));
-    };
-
-    const handleSecurityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { name, value } = e.target;
-      setSecurity((prev) => ({
-        ...prev,
-        [name]: value,
       }));
     };
 
@@ -156,34 +133,10 @@ import {
       }
     };
 
-    const handleSaveSecurity = async () => {
-      setSecurityError(null);
-      setSecuritySuccess(false);
-
-      if (security.newPassword !== security.confirmPassword) {
-        setSecurityError("New password and confirm password don't match");
-        return;
-      }
-      setIsSaving(true);
-      try {
-        await updateUserSecurity({
-          email: security.email,
-          currentPassword: security.currentPassword,
-          newPassword: security.newPassword,
-        });
-        setSecuritySuccess(true);
-        setSecurity((prev) => ({
-          ...prev,
-          currentPassword: '',
-          newPassword: '',
-          confirmPassword: '',
-        }));
-        setTimeout(() => setSecuritySuccess(false), 3000);
-      } catch (err: any) {
-        setSecurityError('Wrong Password');
-      } finally {
-        setIsSaving(false);
-      }
+    const handlePasswordChangeSuccess = () => {
+      // Optional: Log out user after password change for security
+      // localStorage.removeItem('authToken');
+      // window.location.href = '/login';
     };
 
     const tabs = [
@@ -333,74 +286,11 @@ import {
               )}
 
               {activeTab === 'security' && (
-                <div className="space-y-6 max-w-md">
-                  <h3 className="text-lg font-medium text-primary-900 mb-4">Security Settings</h3>
-
-                  {securityError && (
-                    <p className="mb-2 text-sm text-red-600 flex items-center gap-1">
-                      <XCircle className="w-4 h-4" /> {securityError}
-                    </p>
-                  )}
-
-                  {securitySuccess && (
-                    <p className="mb-2 text-sm text-primary-600 flex items-center gap-1">
-                      <Check className="w-4 h-4" /> Password info updated successfully!
-                    </p>
-                  )}
-
-                  <Input
-                    type="email"
-                    name="email"
-                    label="Email"
-                    leftIcon={Mail}
-                    placeholder="your-email@example.com"
-                    value={security.email}
-                    onChange={handleSecurityChange}
+                <div className="max-w-2xl">
+                  <ChangePassword
+                    onSuccess={handlePasswordChangeSuccess}
+                    onError={(error) => console.error('Password change error:', error)}
                   />
-
-                  <Input
-                    type={showCurrentPassword ? "text" : "password"}
-                    name="currentPassword"
-                    label="Current Password"
-                    leftIcon={Lock}
-                    rightIcon={showCurrentPassword ? EyeOff : Eye}
-                    placeholder="Current password"
-                    value={security.currentPassword}
-                    onChange={handleSecurityChange}
-                    onRightIconClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                  />
-
-                  <Input
-                    type={showNewPassword ? "text" : "password"}
-                    name="newPassword"
-                    label="New Password"
-                    leftIcon={Lock}
-                    rightIcon={showNewPassword ? EyeOff : Eye}
-                    placeholder="New password"
-                    value={security.newPassword}
-                    onChange={handleSecurityChange}
-                    onRightIconClick={() => setShowNewPassword(!showNewPassword)}
-                  />
-
-                  <Input
-                    type={showConfirmPassword ? "text" : "password"}
-                    name="confirmPassword"
-                    label="Confirm New Password"
-                    leftIcon={Lock}
-                    rightIcon={showConfirmPassword ? EyeOff : Eye}
-                    placeholder="Confirm new password"
-                    value={security.confirmPassword}
-                    onChange={handleSecurityChange}
-                    onRightIconClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  />
-
-                  <button
-                    onClick={handleSaveSecurity}
-                    disabled={isSaving}
-                    className="mt-4 w-full px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {isSaving ? 'Saving...' : 'Update Security Settings'}
-                  </button>
                 </div>
               )}
             </div>
