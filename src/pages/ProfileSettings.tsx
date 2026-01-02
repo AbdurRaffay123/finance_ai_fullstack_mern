@@ -1,349 +1,172 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../components/Layout';
-import { User, Shield, Globe, Save, Check, XCircle, Mail } from 'lucide-react';
-import Input from '../components/Input';
-import ChangePassword from '../components/ChangePassword';
+import { Globe, Check } from 'lucide-react';
 import { useCurrency, SUPPORTED_CURRENCIES } from '../contexts/CurrencyContext';
-import {
-  fetchUserSettings,
-  updateUserSettings,
-  uploadProfilePhoto,
-} from '../api';
+import { fetchUserSettings } from '../api';
 
-  const ProfileSettings = () => {
-    const { currentCurrency, setCurrency, formatCurrency } = useCurrency();
-    const [activeTab, setActiveTab] = useState('profile');
-    const [isSaving, setIsSaving] = useState(false);
-    const [saveSuccess, setSaveSuccess] = useState(false);
-    const [saveError, setSaveError] = useState<string | null>(null);
-    const [photoUploadError, setPhotoUploadError] = useState<string | null>(null);
+const ProfileSettings = () => {
+  const { currentCurrency, setCurrency, formatCurrency, convertToCurrentCurrency } = useCurrency();
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-    const [settings, setSettings] = useState({
-      profile: {
-        fullName: '',
-        email: '',
-        phone: '',
-        profilePhoto: '', // URL to profile photo
-      },
-      preferences: {
-        currency: currentCurrency.code,
-        language: 'English',
-        theme: 'light',
-      },
-    });
+  const [settings, setSettings] = useState({
+    preferences: {
+      currency: currentCurrency.code,
+    },
+  });
 
+  // Get supported currencies from context
+  const supportedCurrencies = Object.values(SUPPORTED_CURRENCIES);
 
-    // Get supported currencies from context
-    const supportedCurrencies = Object.values(SUPPORTED_CURRENCIES);
-
-    useEffect(() => {
-      const loadSettings = async () => {
-        try {
-          const data = await fetchUserSettings();
-          setSettings({
-            profile: {
-              fullName: data.profile.fullName || '',
-              email: data.profile.email || '',
-              phone: data.profile.phone || '',
-              profilePhoto: data.profile.profilePhoto
-                ? `http://localhost:5000${data.profile.profilePhoto}`
-                : '',
-            },
-            preferences: {
-              currency: data.preferences.currency || 'USD',
-              language: data.preferences.language || 'English',
-              theme: data.preferences.theme || 'light',
-            },
-          });
-        } catch (error) {
-          console.error('Failed to load user settings', error);
-        }
-      };
-      loadSettings();
-    }, []);
-
-    const handlePreferenceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const { name, value } = e.target;
-      setSettings((prev) => ({
-        ...prev,
-        preferences: {
-          ...prev.preferences,
-          [name]: value,
-        },
-      }));
-
-      // Update global currency if currency setting changed
-      if (name === 'currency') {
-        setCurrency(value);
-      }
-    };
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const { name, value } = e.target;
-      setSettings((prev) => ({
-        ...prev,
-        profile: {
-          ...prev.profile,
-          [name]: value,
-        },
-      }));
-    };
-
-    const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (!e.target.files || e.target.files.length === 0) return;
-      const file = e.target.files[0];
-      setIsSaving(true);
-      setPhotoUploadError(null);
+  useEffect(() => {
+    const loadSettings = async () => {
       try {
-        const data = await uploadProfilePhoto(file);
-        if (data.profilePhoto) {
-          setSettings((prev) => ({
-            ...prev,
-            profile: {
-              ...prev.profile,
-              profilePhoto: `http://localhost:5000${data.profilePhoto}`,
-            },
-          }));
-        }
-      } catch {
-        setPhotoUploadError('Failed to upload photo');
-      } finally {
-        setIsSaving(false);
-      }
-    };
-
-    const handleSaveChanges = async () => {
-      setIsSaving(true);
-      setSaveSuccess(false);
-      setSaveError(null);
-      try {
-        await updateUserSettings({
-          profile: {
-            fullName: settings.profile.fullName,
-            email: settings.profile.email,
-            phone: settings.profile.phone,
+        const data = await fetchUserSettings();
+        setSettings({
+          preferences: {
+            currency: data.preferences?.currency || currentCurrency.code,
           },
         });
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 3000);
-      } catch {
-        setSaveError('Failed to save settings');
-      } finally {
-        setIsSaving(false);
+      } catch (error) {
+        console.error('Failed to load user settings', error);
       }
     };
+    loadSettings();
+  }, [currentCurrency.code]);
 
-    const handlePasswordChangeSuccess = () => {
-      // Optional: Log out user after password change for security
-      // localStorage.removeItem('authToken');
-      // window.location.href = '/login';
-    };
+  const handleCurrencyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setSettings((prev) => ({
+      ...prev,
+      preferences: {
+        ...prev.preferences,
+        currency: value,
+      },
+    }));
 
-    const tabs = [
-      { id: 'profile', label: 'Profile', icon: User },
-      { id: 'preferences', label: 'Preferences', icon: Globe },
-      { id: 'security', label: 'Security', icon: Shield },
-    ];
+    // Update global currency immediately
+    setCurrency(value);
+    
+    // Show success message
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2000);
+  };
 
-    return (
-      <Layout>
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-2xl font-bold text-primary-900 mb-6 animate-fadeIn">Settings</h1>
+  return (
+    <Layout>
+      <div className="max-w-2xl mx-auto">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="bg-primary-100 p-3 rounded-lg">
+            <Globe className="w-6 h-6 text-primary-600" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-primary-900 animate-fadeIn">Currency Preferences</h1>
+            <p className="text-primary-600 text-sm">Choose your preferred display currency</p>
+          </div>
+        </div>
 
-          <div className="bg-white rounded-xl shadow-sm">
-            <div className="border-b border-gray-200">
-              <nav className="flex -mb-px">
-                {tabs.map((tab) => {
-                  const Icon = tab.icon;
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => setActiveTab(tab.id)}
-                      className={`group inline-flex items-center px-6 py-4 border-b-2 font-medium text-sm ${
-                        activeTab === tab.id
-                          ? 'border-primary-500 text-primary-600'
-                          : 'border-transparent text-primary-500 hover:text-primary-700 hover:border-primary-300'
-                      }`}
-                    >
-                      <Icon className="w-5 h-5 mr-2" />
-                      {tab.label}
-                    </button>
-                  );
-                })}
-              </nav>
+        <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="space-y-6">
+            {/* Currency Description */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-sm text-blue-800">
+                <strong>💡 How it works:</strong> All financial data is stored in PKR (Pakistani Rupee). 
+                When you select a different currency, amounts are automatically converted and displayed 
+                in your preferred currency across the entire application.
+              </p>
             </div>
 
-            <div className="p-6">
-              {activeTab === 'profile' && (
-                <div className="space-y-6">
-                  <div className="flex items-center space-x-6">
-                    <div className="h-24 w-24 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden">
-                      {settings.profile.profilePhoto ? (
-                        <img
-                          src={settings.profile.profilePhoto}
-                          alt="Profile"
-                          className="h-full w-full object-cover rounded-full"
-                        />
-                      ) : (
-                        <User className="w-12 h-12 text-primary-600" />
-                      )}
-                    </div>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoChange}
-                      className="block text-sm text-gray-500"
-                      disabled={isSaving}
-                    />
-                  </div>
-
-                  {photoUploadError && (
-                    <p className="mt-2 text-sm text-red-600 flex items-center gap-1">
-                      <XCircle className="w-4 h-4" /> {photoUploadError}
-                    </p>
-                  )}
-
-                  <div className="grid grid-cols-1 gap-6">
-                    <Input
-                      type="text"
-                      name="fullName"
-                      label="Full Name"
-                      leftIcon={User}
-                      placeholder="John Doe"
-                      value={settings.profile.fullName}
-                      onChange={handleInputChange}
-                    />
-
-                    <Input
-                      type="email"
-                      name="email"
-                      label="Email"
-                      leftIcon={Mail}
-                      placeholder="john@example.com"
-                      value={settings.profile.email}
-                      onChange={handleInputChange}
-                    />
-
-                    <Input
-                      type="tel"
-                      name="phone"
-                      label="Phone Number"
-                      placeholder="+1 (555) 000-0000"
-                      value={settings.profile.phone}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'preferences' && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium text-primary-900 mb-4">Currency Preferences</h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      Choose your preferred currency for displaying financial data. All amounts will be converted and displayed in your selected currency.
-                    </p>
-
-                    <div className="grid grid-cols-1 gap-4 max-w-md">
-                      <div>
-                        <label className="block text-sm font-medium text-primary-700 mb-2">
-                          Display Currency
-                        </label>
-                        <select
-                          name="currency"
-                          value={settings.preferences.currency}
-                          onChange={handlePreferenceChange}
-                          className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                        >
-                          {supportedCurrencies.map((currency) => (
-                            <option key={currency.code} value={currency.code}>
-                              {currency.symbol} {currency.name} ({currency.code})
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div className="bg-gray-50 p-4 rounded-lg">
-                        <h4 className="text-sm font-medium text-primary-900 mb-2">Current Selection</h4>
-                        <div className="flex items-center space-x-2">
-                          <span className="text-2xl">{currentCurrency.symbol}</span>
-                          <div>
-                            <p className="font-medium text-primary-900">{currentCurrency.name}</p>
-                            <p className="text-sm text-gray-600">
-                              1 {currentCurrency.code} = {currentCurrency.rateToPKR} PKR
-                            </p>
-                          </div>
-                        </div>
-                        <div className="mt-3">
-                          <p className="text-xs text-gray-500">
-                            Example: {formatCurrency(1000)} (1000 PKR in {currentCurrency.code})
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeTab === 'security' && (
-                <div className="max-w-2xl">
-                  <ChangePassword
-                    onSuccess={handlePasswordChangeSuccess}
-                    onError={(error) => console.error('Password change error:', error)}
-                  />
-                </div>
-              )}
+            {/* Currency Selector */}
+            <div>
+              <label className="block text-sm font-medium text-primary-700 mb-2">
+                Display Currency
+              </label>
+              <select
+                name="currency"
+                value={settings.preferences.currency}
+                onChange={handleCurrencyChange}
+                className="block w-full rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-lg py-3 px-4"
+              >
+                {supportedCurrencies.map((currency) => (
+                  <option key={currency.code} value={currency.code}>
+                    {currency.symbol} {currency.name} ({currency.code})
+                  </option>
+                ))}
+              </select>
             </div>
 
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 rounded-b-xl">
-              <div className="flex justify-between items-center">
-                {saveSuccess && (
-                  <div className="flex items-center text-primary-600">
-                    <Check className="w-5 h-5 mr-2" />
-                    <span>Settings saved successfully!</span>
-                  </div>
-                )}
+            {/* Success Message */}
+            {saveSuccess && (
+              <div className="flex items-center gap-2 text-green-600 bg-green-50 px-4 py-2 rounded-lg animate-fadeIn">
+                <Check className="w-5 h-5" />
+                <span className="font-medium">Currency updated successfully!</span>
+              </div>
+            )}
 
-                {saveError && (
-                  <div className="flex items-center text-red-600">
-                    <XCircle className="w-5 h-5 mr-2" />
-                    <span>{saveError}</span>
-                  </div>
-                )}
+            {/* Current Selection Preview */}
+            <div className="bg-gradient-to-br from-primary-50 to-primary-100 p-6 rounded-xl border border-primary-200">
+              <h4 className="text-sm font-semibold text-primary-600 uppercase tracking-wide mb-3">
+                Current Selection
+              </h4>
+              <div className="flex items-center gap-4">
+                <div className="bg-white rounded-full p-4 shadow-sm">
+                  <span className="text-3xl font-bold text-primary-700">{currentCurrency.symbol}</span>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-primary-900">{currentCurrency.name}</p>
+                  <p className="text-sm text-primary-600">
+                    Code: {currentCurrency.code}
+                  </p>
+                </div>
+              </div>
+            </div>
 
-                <div className="flex justify-end space-x-3 ml-auto">
-                  <button
-                    className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                    onClick={() => {
-                      // Reset form or reload user settings if needed
-                    }}
+            {/* Exchange Rate Info */}
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-primary-900 mb-3">Exchange Rates (Base: PKR)</h4>
+              <div className="grid grid-cols-2 gap-3">
+                {supportedCurrencies.map((currency) => (
+                  <div 
+                    key={currency.code}
+                    className={`flex items-center justify-between p-2 rounded ${
+                      currency.code === currentCurrency.code 
+                        ? 'bg-primary-100 border border-primary-300' 
+                        : 'bg-white border border-gray-200'
+                    }`}
                   >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveChanges}
-                    disabled={isSaving}
-                    className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                  >
-                    {isSaving ? (
-                      <>
-                        <Save className="w-4 h-4 mr-2 animate-spin" />
-                        Saving...
-                      </>
-                    ) : (
-                      <>
-                        <Save className="w-4 h-4 mr-2" />
-                        Save Changes
-                      </>
-                    )}
-                  </button>
+                    <span className="font-medium text-primary-800">
+                      {currency.symbol} {currency.code}
+                    </span>
+                    <span className="text-sm text-gray-600">
+                      = {currency.rateToPKR} PKR
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Live Preview */}
+            <div className="bg-white border-2 border-dashed border-primary-300 p-4 rounded-lg">
+              <h4 className="text-sm font-medium text-primary-900 mb-3">Live Preview</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-gray-600">1,000 PKR =</span>
+                  <span className="font-bold text-primary-900">{formatCurrency(convertToCurrentCurrency(1000))}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">10,000 PKR =</span>
+                  <span className="font-bold text-primary-900">{formatCurrency(convertToCurrentCurrency(10000))}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-600">100,000 PKR =</span>
+                  <span className="font-bold text-primary-900">{formatCurrency(convertToCurrentCurrency(100000))}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </Layout>
-    );
-  };
+      </div>
+    </Layout>
+  );
+};
 
-  export default ProfileSettings;
+export default ProfileSettings;

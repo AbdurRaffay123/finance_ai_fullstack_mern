@@ -18,6 +18,7 @@ import {
   Sparkles,
   TrendingUp,
   Receipt,
+  Globe,
 } from 'lucide-react';
 import LogoutModal from './LogoutModal';
 
@@ -86,7 +87,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const isTransactionsActive = isActive('/add-transaction') || isActive('/transaction-history');
   const isFinanceActive = isActive('/expenses') || isActive('/budget-management') || isActive('/savings') || isActive('/reports');
   const isAIInsightsActive = isActive('/recommendations') || isActive('/predictions');
-  const isSettingsActive = isActive('/profile') || isActive('/security');
+  const isSettingsActive = isActive('/profile') || isActive('/settings') || isActive('/security');
 
   return (
     <div className="flex flex-col h-screen bg-gradient-soft">
@@ -311,6 +312,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       Profile
                     </Link>
                     <Link
+                      to="/settings"
+                      className={`flex items-center px-4 py-2 text-sm transition-colors ${
+                        isActive('/settings')
+                          ? 'bg-primary-50 text-primary-600'
+                          : 'text-primary-700 hover:bg-primary-50'
+                      }`}
+                    >
+                      <Globe className="w-4 h-4 mr-2" />
+                      Preferences & Currency
+                    </Link>
+                    <Link
                       to="/security"
                       className={`flex items-center px-4 py-2 text-sm transition-colors ${
                         isActive('/security')
@@ -501,6 +513,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <div className="flex items-center">
                     <User className="w-4 h-4 mr-2" />
                     Profile
+                  </div>
+                </Link>
+                <Link
+                  to="/settings"
+                  className={`block px-4 py-2 rounded-lg text-sm ${
+                    isActive('/settings')
+                      ? 'bg-primary-50 text-primary-600'
+                      : 'text-primary-700 hover:bg-primary-50'
+                  }`}
+                >
+                  <div className="flex items-center">
+                    <Globe className="w-4 h-4 mr-2" />
+                    Preferences & Currency
                   </div>
                 </Link>
                 <Link

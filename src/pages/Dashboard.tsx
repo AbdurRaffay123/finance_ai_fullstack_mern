@@ -21,10 +21,11 @@ import {
   getCategoryBreakdown,
   fetchSavingsGoals,
   fetchTransactions,
-  getBudget
+  getBudget,
+  fetchCategories
 } from '../api';
 
-const COLORS = ['#355070', '#6d597a', '#b56576', '#e56b6f', '#eaac8b'];
+const COLORS = ['#355070', '#6d597a', '#b56576', '#e56b6f', '#eaac8b', '#8338ec', '#3a86ff', '#ff006e', '#fb5607', '#ffbe0b', '#06d6a0', '#118ab2'];
 
 interface DashboardStats {
   totalBalance: number;
@@ -41,6 +42,14 @@ interface MonthlyData {
 interface CategoryData {
   name: string;
   value: number;
+}
+
+interface ExpenseCategory {
+  _id: string;
+  name: string;
+  color: string;
+  budget: number;
+  spentAmount?: number;
 }
 
 interface SavingsGoal {
@@ -153,22 +162,53 @@ const Dashboard = () => {
       setError(null);
       
       // Fetch current month budget only (no month parameter = current month)
-      const [statsData, monthlyData, categoryData, goalsData, transactionsData, budgetData] = await Promise.all([
+      const [statsData, monthlyData, transactionCategoryData, goalsData, transactionsData, budgetData, categoriesData] = await Promise.all([
         getDashboardStats(),
         getMonthlySpending(),
         getCategoryBreakdown(),
         fetchSavingsGoals(),
         fetchTransactions(),
-        getBudget() // Current month budget only - no month parameter
+        getBudget(), // Current month budget only - no month parameter
+        fetchCategories() // Fetch user's expense categories
       ]);
       
       setStats(statsData);
       setMonthlyData(monthlyData);
-      setCategoryData(categoryData);
       setSavingsGoals(goalsData);
       setBudget(budgetData);
       // Get the 5 most recent transactions
       setRecentTransactions(transactionsData.slice(0, 5));
+      
+      // Use categories with spentAmount for pie chart if available
+      // This shows data from ExpenseManagement page
+      // Fall back to transaction-based data if categories are empty
+      if (categoriesData && categoriesData.length > 0) {
+        // Convert categories to CategoryData format using spentAmount
+        const categoryDataFromCategories: CategoryData[] = categoriesData
+          .filter((cat: ExpenseCategory) => cat.spentAmount && cat.spentAmount > 0)
+          .map((cat: ExpenseCategory) => ({
+            name: cat.name,
+            value: cat.spentAmount || 0
+          }));
+        
+        // Use category data if it has spending, otherwise use transaction data
+        if (categoryDataFromCategories.length > 0) {
+          setCategoryData(categoryDataFromCategories);
+        } else if (transactionCategoryData && transactionCategoryData.length > 0) {
+          setCategoryData(transactionCategoryData);
+        } else {
+          // If both are empty, show categories with budget as placeholder
+          const categoryDataWithBudget: CategoryData[] = categoriesData
+            .slice(0, 8) // Limit to 8 categories
+            .map((cat: ExpenseCategory) => ({
+              name: cat.name,
+              value: cat.spentAmount || 0
+            }));
+          setCategoryData(categoryDataWithBudget);
+        }
+      } else {
+        setCategoryData(transactionCategoryData);
+      }
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
       setError('Failed to load dashboard data');

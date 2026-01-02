@@ -13,8 +13,10 @@ import {
   Legend
 } from 'recharts';
 import { TrendingUp, TrendingDown, DollarSign, Calendar, Download } from 'lucide-react';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const MonthlySummary = () => {
+  const { formatCurrency, convertToCurrentCurrency } = useCurrency();
   const [selectedMonth, setSelectedMonth] = useState('March 2024');
 
   const monthlyData = {
@@ -78,7 +80,7 @@ const MonthlySummary = () => {
               <h3 className="text-sm font-medium text-gray-500">Total Income</h3>
               <TrendingUp className="w-5 h-5 text-emerald-500" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">${monthlyData.income}</p>
+            <p className="text-2xl font-bold text-gray-900">{formatCurrency(convertToCurrentCurrency(monthlyData.income))}</p>
             <p className="text-sm text-emerald-600 mt-1">
               +{((monthlyData.income - monthlyData.lastMonth.income) / monthlyData.lastMonth.income * 100).toFixed(1)}% from last month
             </p>
@@ -89,7 +91,7 @@ const MonthlySummary = () => {
               <h3 className="text-sm font-medium text-gray-500">Total Expenses</h3>
               <TrendingDown className="w-5 h-5 text-red-500" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">${monthlyData.expenses}</p>
+            <p className="text-2xl font-bold text-gray-900">{formatCurrency(convertToCurrentCurrency(monthlyData.expenses))}</p>
             <p className="text-sm text-red-600 mt-1">
               -{((monthlyData.lastMonth.expenses - monthlyData.expenses) / monthlyData.lastMonth.expenses * 100).toFixed(1)}% from last month
             </p>
@@ -100,7 +102,7 @@ const MonthlySummary = () => {
               <h3 className="text-sm font-medium text-gray-500">Net Savings</h3>
               <DollarSign className="w-5 h-5 text-blue-500" />
             </div>
-            <p className="text-2xl font-bold text-gray-900">${monthlyData.savings}</p>
+            <p className="text-2xl font-bold text-gray-900">{formatCurrency(convertToCurrentCurrency(monthlyData.savings))}</p>
             <p className="text-sm text-blue-600 mt-1">
               +{((monthlyData.savings - monthlyData.lastMonth.savings) / monthlyData.lastMonth.savings * 100).toFixed(1)}% from last month
             </p>

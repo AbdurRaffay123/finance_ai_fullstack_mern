@@ -24,6 +24,7 @@ import {
   getBudget, 
   fetchSavingsGoals 
 } from '../api';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 interface UserFinancialData {
   transactions: any[];
@@ -33,6 +34,7 @@ interface UserFinancialData {
 }
 
 const AIRecommendations = () => {
+  const { formatCurrency, convertToCurrentCurrency } = useCurrency();
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -275,7 +277,7 @@ const AIRecommendations = () => {
               </div>
               <p className="text-sm font-medium text-primary-600 mb-1">Monthly Budget</p>
               <p className="text-3xl font-bold text-primary-900">
-                ${financialData.budget?.monthlyBudget?.toLocaleString() || '0'}
+                {formatCurrency(convertToCurrentCurrency(financialData.budget?.monthlyBudget || 0))}
               </p>
             </div>
           </div>

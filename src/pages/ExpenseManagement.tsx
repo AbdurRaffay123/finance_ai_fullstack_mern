@@ -9,6 +9,7 @@ import {
   updateCategorySpentAmount, // Make sure this is exported from your api.js
 } from '../api';
 import CategoryModal from './CategoryModal'; // Adjust path if needed
+import { useCurrency } from '../contexts/CurrencyContext';
 
 interface Category {
   _id: string;
@@ -19,6 +20,7 @@ interface Category {
 }
 
 const ExpenseManagement: React.FC = () => {
+  const { formatCurrency, convertToCurrentCurrency } = useCurrency();
   const [categories, setCategories] = useState<Category[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -252,11 +254,11 @@ const ExpenseManagement: React.FC = () => {
           <div>
             <div className="flex justify-between text-sm mb-1">
               <span className="text-gray-500">Monthly Budget</span>
-              <span className="font-medium text-gray-900">${category.budget.toLocaleString()}</span>
+              <span className="font-medium text-gray-900">{formatCurrency(convertToCurrentCurrency(category.budget))}</span>
             </div>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-gray-500">Spent</span>
-              <span className="font-medium text-gray-900">${spent.toLocaleString()}</span>
+              <span className="font-medium text-gray-900">{formatCurrency(convertToCurrentCurrency(spent))}</span>
             </div>
             <div className="relative pt-1">
               <div className="flex mb-2 items-center justify-between">

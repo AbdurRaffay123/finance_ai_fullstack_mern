@@ -20,8 +20,10 @@ import {
   Database,
   Zap
 } from 'lucide-react';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const Predictions = () => {
+  const { formatCurrency, convertToCurrentCurrency } = useCurrency();
   const [formData, setFormData] = useState<any>(null);
   const [predictions, setPredictions] = useState<Record<string, number> | null>(null);
   const [loading, setLoading] = useState(false);
@@ -438,11 +440,14 @@ const Predictions = () => {
                               : String(value);
                           }
                           if (typeof value === 'number') {
-                            // Display all monetary values in dollars ($)
-                            const formatted = key === 'Income' || key === 'Desired_Savings' || key.includes('Repayment') || key === 'Rent'
-                              ? `$${value.toLocaleString()}`
-                              : `$${value.toLocaleString()}`;
-                            return key === 'Desired_Savings_Percentage' ? `${formatted}%` : formatted;
+                            // Display all monetary values in selected currency
+                            if (key === 'Desired_Savings_Percentage') {
+                              return `${value.toFixed(1)}%`;
+                            }
+                            if (key === 'Age' || key === 'Dependents') {
+                              return String(value);
+                            }
+                            return formatCurrency(convertToCurrentCurrency(value));
                           }
                           return String(value);
                         })()}
@@ -542,7 +547,7 @@ const Predictions = () => {
                     <div className="flex-1">
                       <p className="text-sm font-medium text-primary-600 mb-1">{label}</p>
                       <p className="text-3xl font-bold text-primary-900">
-                        ${typeof value === 'number' ? value.toLocaleString() : value}
+                        {formatCurrency(convertToCurrentCurrency(typeof value === 'number' ? value : 0))}
                       </p>
                     </div>
                   </div>

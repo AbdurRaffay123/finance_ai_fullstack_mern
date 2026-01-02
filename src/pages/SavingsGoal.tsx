@@ -17,6 +17,7 @@ import {
   Tooltip,
   Line,
 } from 'recharts';
+import { useCurrency } from '../contexts/CurrencyContext';
 
 const goalCategories = [
   { value: 'vacation', label: 'Vacation' },
@@ -34,6 +35,7 @@ const goalCategories = [
 ];
 
 const SavingsGoal = () => {
+  const { formatCurrency, convertToCurrentCurrency } = useCurrency();
   const [showNewGoalForm, setShowNewGoalForm] = useState(false);
   const [goals, setGoals] = useState<any[]>([]);
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
@@ -118,14 +120,11 @@ const SavingsGoal = () => {
   const stats = [
     {
       title: 'Total Saved',
-      amount: `$${goals.reduce((acc, goal) => acc + goal.currentAmount, 0).toLocaleString()}`,
+      amount: formatCurrency(convertToCurrentCurrency(goals.reduce((acc, goal) => acc + goal.currentAmount, 0))),
     },
     {
       title: 'Average Monthly Savings',
-      amount: `$${averageMonthlySavings.toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`,
+      amount: formatCurrency(convertToCurrentCurrency(averageMonthlySavings)),
     },
     {
       title: 'Goals Completed',
@@ -340,13 +339,13 @@ const SavingsGoal = () => {
                 <div>
                   <p className="text-sm text-gray-500">Saved</p>
                   <p className="text-xl font-bold text-gray-900">
-                    ${goal.currentAmount.toLocaleString()}
+                    {formatCurrency(convertToCurrentCurrency(goal.currentAmount))}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-500">Target</p>
                   <p className="text-xl font-bold text-gray-900">
-                    ${goal.targetAmount.toLocaleString()}
+                    {formatCurrency(convertToCurrentCurrency(goal.targetAmount))}
                   </p>
                 </div>
               </div>
@@ -399,10 +398,10 @@ const SavingsGoal = () => {
                   <YAxis 
                     stroke="#6b7280"
                     style={{ fontSize: '12px' }}
-                    tickFormatter={(value) => `$${value.toLocaleString()}`}
+                    tickFormatter={(value) => formatCurrency(convertToCurrentCurrency(value))}
                   />
                   <Tooltip 
-                    formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Savings']}
+                    formatter={(value: any) => [formatCurrency(convertToCurrentCurrency(Number(value))), 'Savings']}
                     contentStyle={{
                       backgroundColor: '#f8fafc',
                       border: '1px solid #e2e8f0',
@@ -426,7 +425,7 @@ const SavingsGoal = () => {
             <div className="mt-4 text-center">
               <p className="text-sm text-gray-600">
                 Total Savings: <span className="font-semibold text-gray-900">
-                  ${monthlyProgress[monthlyProgress.length - 1]?.amount.toLocaleString() || 0}
+                  {formatCurrency(convertToCurrentCurrency(monthlyProgress[monthlyProgress.length - 1]?.amount || 0))}
                 </span>
               </p>
             </div>
