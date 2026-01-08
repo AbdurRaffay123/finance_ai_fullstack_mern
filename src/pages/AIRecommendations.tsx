@@ -25,6 +25,7 @@ import {
   fetchSavingsGoals 
 } from '../api';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useMonth } from '../contexts/MonthContext';
 
 interface UserFinancialData {
   transactions: any[];
@@ -35,6 +36,7 @@ interface UserFinancialData {
 
 const AIRecommendations = () => {
   const { formatCurrency, convertToCurrentCurrency } = useCurrency();
+  const { selectedMonth } = useMonth();
   const [loading, setLoading] = useState(false);
   const [fetchingData, setFetchingData] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -45,12 +47,12 @@ const AIRecommendations = () => {
   const fetchUserFinancialData = async () => {
     try {
       setFetchingData(true);
-      // Fetch current month budget only for AI recommendations
+      // Fetch selected month data for AI recommendations
       const [transactions, categories, budget, savingsGoals] = await Promise.all([
-        fetchTransactions(),
-        fetchCategories(),
-        getBudget(), // Current month budget only - no month parameter
-        fetchSavingsGoals(),
+        fetchTransactions(selectedMonth), // Use selected month
+        fetchCategories(selectedMonth), // Filter by selected month
+        getBudget(selectedMonth), // Use selected month budget
+        fetchSavingsGoals(selectedMonth), // Filter by selected month
       ]);
 
       setFinancialData({

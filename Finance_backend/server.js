@@ -46,49 +46,41 @@ const savingsGoalRoutes = require('./routes/savingsGoal');
 const reportRoutes = require('./routes/report');
 const budgetRoutes = require('./routes/budget');
 
-// MongoDB Atlas Connection with improved error handling
-const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
-  console.error("❌ MONGODB_URI is not defined in .env file");
-  process.exit(1);
-}
+// MongoDB Local Connection
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/financeDB';
 
 mongoose.connect(MONGODB_URI, {
-  serverSelectionTimeoutMS: 30000, // Timeout after 30s (increased from 5s)
-  socketTimeoutMS: 45000, // Close sockets after 45s of inactivity
-  connectTimeoutMS: 30000, // Connection timeout
-  retryWrites: true,
-  w: 'majority'
+  serverSelectionTimeoutMS: 5000, // Timeout after 5s for local
+  socketTimeoutMS: 45000,
+  connectTimeoutMS: 5000,
 })
-  .then(() => {
-    console.log("✅ MongoDB Atlas connected successfully");
+  .then(async () => {
+    console.log("✅ MongoDB Local connected successfully");
     console.log(`   Database: ${mongoose.connection.name}`);
     console.log(`   Host: ${mongoose.connection.host}`);
+    
+    // Ensure budget indexes are correct (prevent duplicate key errors)
+    const ensureBudgetIndexes = require('./utils/ensureBudgetIndexes');
+    await ensureBudgetIndexes();
   })
   .catch(err => {
-    console.error("❌ MongoDB Atlas connection error:", err.message);
+    console.error("❌ MongoDB Local connection error:", err.message);
     console.error("   Please check:");
-    console.error("   1. MongoDB Atlas connection string in .env file");
-    console.error("   2. Network connectivity");
-    console.error("   3. IP whitelist in MongoDB Atlas (allow 0.0.0.0/0 for all IPs)");
-    console.error("   4. Database user credentials");
+    console.error("   1. MongoDB is running: sudo systemctl status mongod");
+    console.error("   2. Start MongoDB: sudo systemctl start mongod");
+    console.error("   3. Connection string in .env file: mongodb://localhost:27017/financeDB");
     console.warn("⚠️  Server will continue running but database operations will fail");
-    // Don't exit - allow server to start and retry connection
   });
 
 // Handle connection events
 mongoose.connection.on('disconnected', () => {
-  console.warn('⚠️  MongoDB Atlas disconnected');
+  console.warn('⚠️  MongoDB Local disconnected');
   console.log('🔄 Attempting to reconnect...');
-  // Auto-reconnect after 5 seconds
   setTimeout(() => {
     mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 30000,
+      serverSelectionTimeoutMS: 5000,
       socketTimeoutMS: 45000,
-      connectTimeoutMS: 30000,
-      retryWrites: true,
-      w: 'majority'
+      connectTimeoutMS: 5000,
     }).catch(err => {
       console.error('❌ Reconnection failed:', err.message);
     });
@@ -96,11 +88,11 @@ mongoose.connection.on('disconnected', () => {
 });
 
 mongoose.connection.on('reconnected', () => {
-  console.log('✅ MongoDB Atlas reconnected successfully');
+  console.log('✅ MongoDB Local reconnected successfully');
 });
 
 mongoose.connection.on('error', (err) => {
-  console.error('❌ MongoDB Atlas error:', err.message);
+  console.error('❌ MongoDB Local error:', err.message);
 });
 
 app.use('/api/auth', authRoutes);

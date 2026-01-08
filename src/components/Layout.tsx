@@ -21,6 +21,7 @@ import {
   Globe,
 } from 'lucide-react';
 import LogoutModal from './LogoutModal';
+import MonthSelector from './MonthSelector';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -98,12 +99,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Logo */}
             <div className="flex-shrink-0">
               <Link to="/dashboard" className="cursor-pointer">
-          <h1 className="text-2xl font-bold gradient-text">FinanceAI</h1>
+                <h1 className="text-2xl font-bold gradient-text">FinanceAI</h1>
               </Link>
-        </div>
+            </div>
 
             {/* Desktop Navigation */}
-            <div className="hidden md:flex md:items-center md:space-x-1 md:flex-1 md:justify-center">
+            <div className="hidden md:flex md:items-center md:space-x-2 md:flex-1 md:justify-center">
               {/* Dashboard */}
               <Link
                 to="/dashboard"
@@ -136,7 +137,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${transactionsDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {transactionsDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-primary-200 py-1 z-50">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-primary-200 py-1 z-50">
                     <Link
                       to="/add-transaction"
                       className={`flex items-center px-4 py-2 text-sm transition-colors ${
@@ -180,7 +181,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${financeDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {financeDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-primary-200 py-1 z-50">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-primary-200 py-1 z-50">
                     <Link
                       to="/expenses"
                       className={`flex items-center px-4 py-2 text-sm transition-colors ${
@@ -249,7 +250,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${aiInsightsDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {aiInsightsDropdownOpen && (
-                  <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-primary-200 py-1 z-50">
+                  <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-primary-200 py-1 z-50">
                     <Link
                       to="/recommendations"
                       className={`flex items-center px-4 py-2 text-sm transition-colors ${
@@ -277,8 +278,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               </div>
             </div>
 
-            {/* Right Side - Settings & Logout */}
-            <div className="hidden md:flex md:items-center md:space-x-2">
+            {/* Right Side - Month Selector & Settings */}
+            <div className="hidden md:flex md:items-center md:space-x-3">
+              {/* Month Selector */}
+              <MonthSelector />
+              
               {/* Settings Dropdown */}
               <div className="relative" ref={settingsRef}>
                 <button
@@ -299,9 +303,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <ChevronDown className={`w-4 h-4 ml-1 transition-transform ${settingsDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {settingsDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-primary-200 py-1 z-50">
+                  <div className="absolute top-full right-0 mt-2 w-52 bg-white rounded-lg shadow-lg border border-primary-200 py-1 z-50">
                     <Link
                       to="/profile"
+                      onClick={() => setSettingsDropdownOpen(false)}
                       className={`flex items-center px-4 py-2 text-sm transition-colors ${
                         isActive('/profile')
                           ? 'bg-primary-50 text-primary-600'
@@ -313,6 +318,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </Link>
                     <Link
                       to="/settings"
+                      onClick={() => setSettingsDropdownOpen(false)}
                       className={`flex items-center px-4 py-2 text-sm transition-colors ${
                         isActive('/settings')
                           ? 'bg-primary-50 text-primary-600'
@@ -324,6 +330,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     </Link>
                     <Link
                       to="/security"
+                      onClick={() => setSettingsDropdownOpen(false)}
                       className={`flex items-center px-4 py-2 text-sm transition-colors ${
                         isActive('/security')
                           ? 'bg-primary-50 text-primary-600'
@@ -333,16 +340,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       <Shield className="w-4 h-4 mr-2" />
                       Security
                     </Link>
+                    
+                    {/* Divider */}
+                    <div className="border-t border-primary-200 my-1"></div>
+                    
+                    {/* Logout Button */}
+                    <button
+                      onClick={() => {
+                        setSettingsDropdownOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full text-left flex items-center px-4 py-2 text-sm text-accent-600 hover:bg-accent-50 transition-colors"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Logout
+                    </button>
                   </div>
                 )}
               </div>
-          <button
-            onClick={handleLogout}
-                className="px-4 py-2 rounded-lg text-sm font-medium text-accent-600 hover:bg-accent-50 hover:text-accent-700 transition-all duration-200 flex items-center"
-          >
-                <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </button>
+              
               <LogoutModal
                 isOpen={showLogoutModal}
                 onClose={() => setShowLogoutModal(false)}
@@ -365,6 +381,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-primary-200 bg-white">
+            {/* Mobile Month Selector */}
+            <div className="px-4 py-3 border-b border-primary-200">
+              <MonthSelector showLabel={true} />
+            </div>
             <div className="px-4 py-2 space-y-1">
               <Link
                 to="/dashboard"
@@ -541,15 +561,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     Security
                   </div>
                 </Link>
+                
+                {/* Divider */}
+                <div className="border-t border-primary-200 my-2 mx-4"></div>
+                
+                {/* Logout Button */}
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-accent-600 hover:bg-accent-50 transition-colors flex items-center"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Logout
+                </button>
               </div>
-
-              <button
-                onClick={handleLogout}
-                className="w-full text-left px-4 py-2 rounded-lg text-sm font-medium text-accent-600 hover:bg-accent-50 transition-colors flex items-center"
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Logout
-              </button>
+              
               <LogoutModal
                 isOpen={showLogoutModal}
                 onClose={() => setShowLogoutModal(false)}

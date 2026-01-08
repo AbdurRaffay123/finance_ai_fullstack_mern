@@ -92,7 +92,7 @@ const AddTransaction = () => {
           <CurrencyInput
             label="Amount"
             name="amount"
-            valueInPKR={parseFloat(transaction.amount) || 0}
+            valueInPKR={transaction.amount ? parseFloat(transaction.amount) : undefined}
             onChange={(e) => {
               const syntheticEvent = {
                 ...e,

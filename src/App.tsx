@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { CurrencyProvider } from './contexts/CurrencyContext';
+import { MonthProvider } from './contexts/MonthContext';
 import LandingPage from './pages/LandingPage';
 import SignUp from './pages/SignUp';
 import Login from './pages/Login';
@@ -28,7 +29,8 @@ import './styles/global.css';
 function App() {
   return (
     <CurrencyProvider>
-      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+      <MonthProvider>
+        <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
         {/* Public Routes */}
         <Route path="/" element={<LandingPage />} />
@@ -57,6 +59,7 @@ function App() {
         <Route path="/transaction-history" element={<TransactionHistory />} />
         </Routes>
       </Router>
+      </MonthProvider>
     </CurrencyProvider>
   );
 }

@@ -3,11 +3,13 @@ import Layout from '../components/Layout';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus, ChevronDown, ChevronUp, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { useCurrency } from '../contexts/CurrencyContext';
-import api from '../api';
+import { useMonth } from '../contexts/MonthContext';
+import { fetchTransactions } from '../api';
 import Input from '../components/Input';
 
 const TransactionHistory = () => {
   const { formatCurrency, convertToCurrentCurrency } = useCurrency();
+  const { selectedMonth } = useMonth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [sortField, setSortField] = useState<string>('date');
@@ -18,7 +20,7 @@ const TransactionHistory = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchTransactions = async () => {
+    const loadTransactions = async () => {
       const token = localStorage.getItem('authToken');
       if (!token) {
         console.error('No token found');
@@ -26,21 +28,21 @@ const TransactionHistory = () => {
         return;
       }
       try {
-        const response = await api.get('/transactions');
-        console.log('Fetched transactions:', response.data);
+        const data = await fetchTransactions(selectedMonth);
+        console.log('Fetched transactions for month:', selectedMonth, data);
         // Debug: log first transaction to check if description exists
-        if (response.data && response.data.length > 0) {
-          console.log('Sample transaction:', response.data[0]);
-          console.log('Description field:', response.data[0].description);
+        if (data && data.length > 0) {
+          console.log('Sample transaction:', data[0]);
+          console.log('Description field:', data[0].description);
         }
-        setTransactions(response.data);
+        setTransactions(data);
       } catch (err) {
         console.error('Error fetching transactions:', err);
       }
     };
 
-    fetchTransactions();
-  }, []);
+    loadTransactions();
+  }, [selectedMonth]); // Refetch when month changes
 
   // Convert transaction amounts to current currency
   useEffect(() => {

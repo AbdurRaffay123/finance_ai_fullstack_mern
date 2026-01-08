@@ -18,6 +18,8 @@ import {
   Line,
 } from 'recharts';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useMonth } from '../contexts/MonthContext';
+import CurrencyInput from '../components/CurrencyInput';
 
 const goalCategories = [
   { value: 'vacation', label: 'Vacation' },
@@ -36,18 +38,19 @@ const goalCategories = [
 
 const SavingsGoal = () => {
   const { formatCurrency, convertToCurrentCurrency } = useCurrency();
+  const { selectedMonth } = useMonth();
   const [showNewGoalForm, setShowNewGoalForm] = useState(false);
   const [goals, setGoals] = useState<any[]>([]);
   const [editingGoalId, setEditingGoalId] = useState<string | null>(null);
   const [newGoal, setNewGoal] = useState({
     name: '',
-    targetAmount: '',
+    targetAmount: undefined as number | undefined, // Store in PKR, undefined = empty
     deadline: '',
     category: 'vacation',
   });
 
   const [addingSavedAmountForId, setAddingSavedAmountForId] = useState<string | null>(null);
-  const [savedAmountToAdd, setSavedAmountToAdd] = useState('');
+  const [savedAmountToAdd, setSavedAmountToAdd] = useState<number | undefined>(undefined); // Store in PKR, undefined = empty
 
   // New state for delete confirmation modal
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
@@ -134,7 +137,7 @@ const SavingsGoal = () => {
 
   useEffect(() => {
     loadGoals();
-  }, []);
+  }, [selectedMonth]); // Reload when month changes
 
   // Recalculate progress when goals change
   useEffect(() => {
@@ -146,7 +149,7 @@ const SavingsGoal = () => {
 
   const loadGoals = async () => {
     try {
-      const data = await fetchSavingsGoals();
+      const data = await fetchSavingsGoals(selectedMonth);
       setGoals(data);
     } catch (error) {
       console.error('Failed to fetch savings goals:', error);
@@ -155,8 +158,8 @@ const SavingsGoal = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newGoal.name || !newGoal.targetAmount || !newGoal.deadline || !newGoal.category) {
-      alert('Please fill all fields');
+    if (!newGoal.name || !newGoal.targetAmount || newGoal.targetAmount <= 0 || !newGoal.deadline || !newGoal.category) {
+      alert('Please fill all fields with valid values');
       return;
     }
 
@@ -164,23 +167,24 @@ const SavingsGoal = () => {
       if (editingGoalId) {
         await updateSavingsGoal(editingGoalId, {
           name: newGoal.name,
-          targetAmount: Number(newGoal.targetAmount),
+          targetAmount: newGoal.targetAmount, // Already in PKR
           deadline: newGoal.deadline,
           category: newGoal.category,
         });
       } else {
+        // Pass selectedMonth when creating new goal
         await addSavingsGoal({
           name: newGoal.name,
-          targetAmount: Number(newGoal.targetAmount),
+          targetAmount: newGoal.targetAmount, // Already in PKR
           currentAmount: 0,
           deadline: newGoal.deadline,
           category: newGoal.category,
-        });
+        }, selectedMonth);
       }
 
       setShowNewGoalForm(false);
       setEditingGoalId(null);
-      setNewGoal({ name: '', targetAmount: '', deadline: '', category: 'vacation' });
+      setNewGoal({ name: '', targetAmount: undefined, deadline: '', category: 'vacation' });
       loadGoals();
     } catch (error) {
       console.error('Failed to save savings goal:', error);
@@ -213,7 +217,7 @@ const SavingsGoal = () => {
     setEditingGoalId(goal._id);
     setNewGoal({
       name: goal.name,
-      targetAmount: goal.targetAmount.toString(),
+      targetAmount: goal.targetAmount || undefined, // Already in PKR, use undefined if 0
       deadline: goal.deadline.slice(0, 10),
       category: goal.category,
     });
@@ -227,17 +231,16 @@ const SavingsGoal = () => {
 
   const openAddSavedAmount = (goalId: string) => {
     setAddingSavedAmountForId(goalId);
-    setSavedAmountToAdd('');
+    setSavedAmountToAdd(undefined);
   };
 
   const closeAddSavedAmount = () => {
     setAddingSavedAmountForId(null);
-    setSavedAmountToAdd('');
+    setSavedAmountToAdd(undefined);
   };
 
   const submitAddSavedAmount = async () => {
-    const amountNum = Number(savedAmountToAdd);
-    if (isNaN(amountNum) || amountNum <= 0) {
+    if (!savedAmountToAdd || savedAmountToAdd <= 0) {
       alert('Please enter a valid positive amount');
       return;
     }
@@ -250,7 +253,8 @@ const SavingsGoal = () => {
         return;
       }
 
-      const newCurrentAmount = goal.currentAmount + amountNum;
+      // savedAmountToAdd is already in PKR (converted by CurrencyInput)
+      const newCurrentAmount = goal.currentAmount + savedAmountToAdd;
 
       await updateSavingsGoalCurrentAmount(goal._id, newCurrentAmount);
 
@@ -274,7 +278,7 @@ const SavingsGoal = () => {
           <button
             onClick={() => {
               setEditingGoalId(null);
-              setNewGoal({ name: '', targetAmount: '', deadline: '', category: 'vacation' });
+              setNewGoal({ name: '', targetAmount: undefined, deadline: '', category: 'vacation' });
               setShowNewGoalForm(true);
             }}
             className="btn-primary flex items-center animate-slideIn"
@@ -451,13 +455,16 @@ const SavingsGoal = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Target Amount</label>
-                  <input
-                    type="number"
-                    value={newGoal.targetAmount}
-                    onChange={(e) => setNewGoal({ ...newGoal, targetAmount: e.target.value })}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500"
+                  <CurrencyInput
+                    label="Target Amount"
+                    valueInPKR={newGoal.targetAmount}
+                    onChange={(e) => {
+                      const value = parseFloat(e.target.value);
+                      setNewGoal({ ...newGoal, targetAmount: isNaN(value) ? undefined : value });
+                    }}
                     required
+                    min="0"
+                    step="0.01"
                   />
                 </div>
                 <div>
@@ -512,13 +519,17 @@ const SavingsGoal = () => {
           <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
             <div className="bg-white rounded-xl p-6 max-w-sm w-full">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">Add Saved Amount</h2>
-              <input
-                type="number"
-                value={savedAmountToAdd}
-                onChange={(e) => setSavedAmountToAdd(e.target.value)}
-                placeholder="Enter amount"
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 mb-4"
+              <CurrencyInput
+                label="Amount Saved"
+                valueInPKR={savedAmountToAdd}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  setSavedAmountToAdd(isNaN(value) ? undefined : value);
+                }}
+                required
                 min="0"
+                step="0.01"
+                containerClassName="mb-4"
               />
               <div className="flex justify-end space-x-3">
                 <button

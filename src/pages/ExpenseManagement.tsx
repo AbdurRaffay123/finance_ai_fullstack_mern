@@ -10,6 +10,8 @@ import {
 } from '../api';
 import CategoryModal from './CategoryModal'; // Adjust path if needed
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useMonth } from '../contexts/MonthContext';
+import CurrencyInput from '../components/CurrencyInput';
 
 interface Category {
   _id: string;
@@ -21,6 +23,7 @@ interface Category {
 
 const ExpenseManagement: React.FC = () => {
   const { formatCurrency, convertToCurrentCurrency } = useCurrency();
+  const { selectedMonth } = useMonth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [categoryId, setCategoryId] = useState<string | null>(null);
@@ -35,13 +38,13 @@ const ExpenseManagement: React.FC = () => {
 
   // New states for spent amount modal
   const [addingSpentAmountForId, setAddingSpentAmountForId] = useState<string | null>(null);
-  const [spentAmountToAdd, setSpentAmountToAdd] = useState('');
+  const [spentAmountToAdd, setSpentAmountToAdd] = useState<number | undefined>(undefined); // Store in PKR, undefined = empty
 
   const loadCategories = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchCategories();
+      const data = await fetchCategories(selectedMonth);
       setCategories(data);
     } catch (err) {
       console.error('Failed to load categories', err);
@@ -49,7 +52,7 @@ const ExpenseManagement: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedMonth]);
 
   useEffect(() => {
     loadCategories();
@@ -91,7 +94,8 @@ const ExpenseManagement: React.FC = () => {
         if (categoryId) {
           await updateCategory(categoryId, { name, color, budget });
         } else {
-          await addCategory({ name, color, budget });
+          // Pass selectedMonth when creating new category
+          await addCategory({ name, color, budget }, selectedMonth);
         }
         closeModal();
         loadCategories();
@@ -100,30 +104,30 @@ const ExpenseManagement: React.FC = () => {
         alert('Failed to save category');
       }
     },
-    [name, color, budget, categoryId, closeModal, loadCategories]
+    [name, color, budget, categoryId, selectedMonth, closeModal, loadCategories]
   );
 
   // Open the modal to add spent amount
   const openAddSpentAmount = (id: string) => {
     setAddingSpentAmountForId(id);
-    setSpentAmountToAdd('');
+    setSpentAmountToAdd(undefined);
   };
 
   const closeAddSpentAmount = () => {
     setAddingSpentAmountForId(null);
-    setSpentAmountToAdd('');
+    setSpentAmountToAdd(undefined);
   };
 
   const submitAddSpentAmount = async () => {
-    const amountNum = Number(spentAmountToAdd);
-    if (isNaN(amountNum) || amountNum <= 0) {
+    if (!spentAmountToAdd || spentAmountToAdd <= 0) {
       alert('Please enter a valid positive amount');
       return;
     }
     try {
       if (!addingSpentAmountForId) return;
 
-      await updateCategorySpentAmount(addingSpentAmountForId, amountNum);
+      // spentAmountToAdd is already in PKR (converted by CurrencyInput)
+      await updateCategorySpentAmount(addingSpentAmountForId, spentAmountToAdd);
       await loadCategories();
       closeAddSpentAmount();
     } catch (error) {
@@ -225,14 +229,19 @@ const ExpenseManagement: React.FC = () => {
         {addingSpentAmountForId === category._id && (
           <div className="absolute inset-0 bg-white bg-opacity-100 flex flex-col items-center justify-center rounded-xl shadow-lg p-4 z-20">
             <h2 className="text-lg font-semibold mb-4">Add Spent Amount</h2>
-            <input
-              type="number"
-              min="0"
-              value={spentAmountToAdd}
-              onChange={(e) => setSpentAmountToAdd(e.target.value)}
-              placeholder="Enter amount spent"
-              className="mb-4 rounded border border-gray-300 p-2 w-full max-w-xs"
-            />
+            <div className="w-full max-w-xs mb-4">
+              <CurrencyInput
+                label="Amount Spent"
+                valueInPKR={spentAmountToAdd}
+                onChange={(e) => {
+                  const value = parseFloat(e.target.value);
+                  setSpentAmountToAdd(isNaN(value) ? undefined : value);
+                }}
+                required
+                min="0"
+                step="0.01"
+              />
+            </div>
             <div className="flex space-x-4">
               <button
                 onClick={submitAddSpentAmount}

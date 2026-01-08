@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useMonth } from '../contexts/MonthContext';
 import {
   PieChart,
   Pie,
@@ -45,6 +46,7 @@ const COLORS = ['#355070', '#6d597a', '#b56576', '#e56b6f', '#eaac8b', '#8338ec'
 const CategoriesAnalysis = () => {
   const navigate = useNavigate();
   const { formatCurrency, convertToCurrentCurrency } = useCurrency();
+  const { selectedMonth } = useMonth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
@@ -54,17 +56,23 @@ const CategoriesAnalysis = () => {
 
   useEffect(() => {
     fetchCategoryAnalysis();
-  }, []);
+  }, [selectedMonth]); // Refetch when month changes
 
   const fetchCategoryAnalysis = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Fetch category breakdown and transactions
-      const [categoryBreakdown, transactions] = await Promise.all([
-        getCategoryBreakdown(),
-        fetchTransactions()
+      // Calculate previous month for comparison
+      const [year, month] = selectedMonth.split('-').map(Number);
+      const prevMonthDate = new Date(year, month - 2, 1);
+      const prevMonth = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, '0')}`;
+
+      // Fetch category breakdown and transactions for selected month and previous month
+      const [categoryBreakdown, transactions, prevTransactions] = await Promise.all([
+        getCategoryBreakdown(selectedMonth),
+        fetchTransactions(selectedMonth),
+        fetchTransactions(prevMonth) // Fetch previous month for comparison
       ]);
 
       // Process category data with percentages
@@ -85,8 +93,8 @@ const CategoriesAnalysis = () => {
       const monthlyData = processMonthlyTrends(transactions, topCats);
       setMonthlyTrends(monthlyData);
 
-      // Generate insights by comparing current month to previous month
-      const insights = generateCategoryInsights(transactions, topCats);
+      // Generate insights by comparing selected month to previous month
+      const insights = generateCategoryInsights(transactions, prevTransactions, topCats);
       setCategoryInsights(insights);
 
     } catch (err) {
@@ -127,37 +135,19 @@ const CategoriesAnalysis = () => {
     return sortedMonths;
   };
 
-  const generateCategoryInsights = (transactions: Transaction[], categories: string[]): CategoryInsight[] => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    
-    // Previous month
-    const prevMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const prevYear = currentMonth === 0 ? currentYear - 1 : currentYear;
-
+  const generateCategoryInsights = (currentTransactions: Transaction[], prevTransactions: Transaction[], categories: string[]): CategoryInsight[] => {
     const insights: CategoryInsight[] = [];
 
     categories.forEach(category => {
-      // Current month spending
-      const currentSpending = transactions
-        .filter(tx => {
-          const date = new Date(tx.date);
-          return tx.category === category && 
-                 date.getMonth() === currentMonth && 
-                 date.getFullYear() === currentYear;
-        })
-        .reduce((sum, tx) => sum + tx.amount, 0);
+      // Selected month spending (from transactions already filtered by selectedMonth)
+      const currentSpending = currentTransactions
+        .filter(tx => tx.category === category)
+        .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
 
-      // Previous month spending
-      const previousSpending = transactions
-        .filter(tx => {
-          const date = new Date(tx.date);
-          return tx.category === category && 
-                 date.getMonth() === prevMonth && 
-                 date.getFullYear() === prevYear;
-        })
-        .reduce((sum, tx) => sum + tx.amount, 0);
+      // Previous month spending (from prevTransactions already filtered by previous month)
+      const previousSpending = prevTransactions
+        .filter(tx => tx.category === category)
+        .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
 
       // Calculate change
       let change = 0;

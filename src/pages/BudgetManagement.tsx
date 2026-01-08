@@ -4,6 +4,7 @@ import { DollarSign, Target, TrendingUp, Calendar, Save, Loader2, AlertCircle } 
 import { getBudget, updateBudget, getBudgetHistory } from '../api';
 import MonthYearPicker from '../components/MonthYearPicker';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useMonth } from '../contexts/MonthContext';
 import CurrencyInput from '../components/CurrencyInput';
 
 interface Budget {
@@ -16,6 +17,7 @@ interface Budget {
 
 const BudgetManagement = () => {
   const { formatCurrency, convertToCurrentCurrency } = useCurrency();
+  const { selectedMonth, setSelectedMonth } = useMonth(); // Use global month context
   const [budget, setBudget] = useState<Budget | null>(null);
   const [budgetHistory, setBudgetHistory] = useState<Budget[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,13 +25,6 @@ const BudgetManagement = () => {
   const [error, setError] = useState<string | null>(null);
   const [monthError, setMonthError] = useState<string | null>(null);
   const [newBudget, setNewBudget] = useState('');
-  const [selectedMonth, setSelectedMonth] = useState<string>(() => {
-    // Default to current month
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
-  });
 
   useEffect(() => {
     fetchBudgetData();
@@ -62,11 +57,11 @@ const BudgetManagement = () => {
       }
       
       // Convert and set budget amount for display
-      if (budgetData?.monthlyBudget !== undefined) {
+      if (budgetData?.monthlyBudget !== undefined && budgetData.monthlyBudget > 0) {
         const budgetInPKR = budgetData.monthlyBudget; // Assume backend returns in PKR
         setNewBudget(budgetInPKR.toString());
       } else {
-        setNewBudget('0');
+        setNewBudget(''); // Empty string = show placeholder "0.00"
       }
     } catch (err: any) {
       console.error('Error fetching budget data:', err);
@@ -86,11 +81,11 @@ const BudgetManagement = () => {
       setBudget(budgetData);
       
       // Convert and set budget amount for display
-      if (budgetData?.monthlyBudget !== undefined) {
+      if (budgetData?.monthlyBudget !== undefined && budgetData.monthlyBudget > 0) {
         const budgetInPKR = budgetData.monthlyBudget; // Assume backend returns in PKR
         setNewBudget(budgetInPKR.toString());
       } else {
-        setNewBudget('0');
+        setNewBudget(''); // Empty string = show placeholder "0.00"
       }
     } catch (err: any) {
       console.error('Error fetching budget for month:', err);
@@ -106,7 +101,7 @@ const BudgetManagement = () => {
           createdAt: null,
           updatedAt: null,
         });
-        setNewBudget('0');
+        setNewBudget(''); // Empty string = show placeholder "0.00"
       }
     }
   };
@@ -261,7 +256,7 @@ const BudgetManagement = () => {
             <div>
               <CurrencyInput
                 label="Monthly Budget Amount"
-                valueInPKR={parseFloat(newBudget) || 0}
+                valueInPKR={newBudget ? parseFloat(newBudget) : undefined}
                 onChange={(e) => setNewBudget(e.target.value)}
                 containerClassName=""
                 inputClassName=""

@@ -35,8 +35,14 @@ api.interceptors.response.use(
 );
 
 // CRUD for categories
-export const fetchCategories = () => api.get('/categories').then(res => res.data);
-export const addCategory = (category) => api.post('/categories', category).then(res => res.data);
+export const fetchCategories = (month) => {
+  const url = month ? `/categories?month=${month}` : '/categories';
+  return api.get(url).then(res => res.data);
+};
+export const addCategory = (category, month) => {
+  const categoryData = month ? { ...category, month } : category;
+  return api.post('/categories', categoryData).then(res => res.data);
+};
 export const updateCategory = (id, category) => api.put(`/categories/${id}`, category).then(res => res.data);
 export const deleteCategory = (id) => api.delete(`/categories/${id}`).then(res => res.data);
 
@@ -46,8 +52,14 @@ export const updateCategorySpentAmount = (id, amount) =>
 
 
 // CRUD for savings goals
-export const fetchSavingsGoals = () => api.get('/savingsGoals').then(res => res.data);
-export const addSavingsGoal = (goal) => api.post('/savingsGoals', goal).then(res => res.data);
+export const fetchSavingsGoals = (month) => {
+  const url = month ? `/savingsGoals?month=${month}` : '/savingsGoals';
+  return api.get(url).then(res => res.data);
+};
+export const addSavingsGoal = (goal, month) => {
+  const goalData = month ? { ...goal, month } : goal;
+  return api.post('/savingsGoals', goalData).then(res => res.data);
+};
 export const updateSavingsGoal = (id, goal) => api.put(`/savingsGoals/${id}`, goal).then(res => res.data);
 export const deleteSavingsGoal = (id) => api.delete(`/savingsGoals/${id}`).then(res => res.data);
 // Patch update currentAmount for a specific savings goal
@@ -75,15 +87,24 @@ export const changePassword = (passwordData) =>
   api.put('/user/change-password', passwordData).then(res => res.data);
 
 // Transaction APIs
-export const fetchTransactions = () => api.get('/transactions').then(res => res.data);
+export const fetchTransactions = (month) => {
+  const url = month ? `/transactions?month=${month}` : '/transactions';
+  return api.get(url).then(res => res.data);
+};
 export const addTransaction = (transaction) => api.post('/transactions', transaction).then(res => res.data);
 export const updateTransaction = (id, transaction) => api.put(`/transactions/${id}`, transaction).then(res => res.data);
 export const deleteTransaction = (id) => api.delete(`/transactions/${id}`).then(res => res.data);
 
 // Dashboard analytics APIs
-export const getDashboardStats = () => api.get('/transactions/dashboard-stats').then(res => res.data);
+export const getDashboardStats = (month) => {
+  const url = month ? `/transactions/dashboard-stats?month=${month}` : '/transactions/dashboard-stats';
+  return api.get(url).then(res => res.data);
+};
 export const getMonthlySpending = () => api.get('/transactions/monthly-spending').then(res => res.data);
-export const getCategoryBreakdown = () => api.get('/transactions/category-breakdown').then(res => res.data);
+export const getCategoryBreakdown = (month) => {
+  const url = month ? `/transactions/category-breakdown?month=${month}` : '/transactions/category-breakdown';
+  return api.get(url).then(res => res.data);
+};
 
 // Budget APIs
 export const getBudget = (month) => {

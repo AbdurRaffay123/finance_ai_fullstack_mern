@@ -73,11 +73,23 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-// Get all transactions for a user
+// Get all transactions for a user (optionally filtered by month)
+// GET /transactions?month=2024-12
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const transactions = await Transaction.find({ userId: req.user.id });
+    let query = { userId: req.user.id };
+    
+    // If month parameter is provided, filter by that month
+    if (req.query.month) {
+      const [year, month] = req.query.month.split('-').map(Number);
+      const startOfMonth = new Date(year, month - 1, 1);
+      const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
+      query.date = { $gte: startOfMonth, $lte: endOfMonth };
+    }
+    
+    const transactions = await Transaction.find(query).sort({ date: -1 });
     console.log('=== GET /transactions ===');
+    console.log('Month filter:', req.query.month || 'All months');
     console.log('Found transactions:', transactions.length);
     if (transactions.length > 0) {
       console.log('First transaction:', JSON.stringify(transactions[0], null, 2));
@@ -90,68 +102,63 @@ router.get('/', verifyToken, async (req, res) => {
   }
 });
 
-// Get dashboard statistics
+// Get dashboard statistics (optionally filtered by month)
+// GET /transactions/dashboard-stats?month=2024-12
 router.get('/dashboard-stats', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Get current month transactions
-    const currentDate = new Date();
-    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    // Get selected month or default to current month
+    let selectedMonth = req.query.month;
+    if (!selectedMonth) {
+      const currentDate = new Date();
+      selectedMonth = currentDate.getFullYear() + '-' + String(currentDate.getMonth() + 1).padStart(2, '0');
+    }
     
-    // Get last month transactions for comparison
-    const lastMonthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-    const lastMonthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0);
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const startOfMonth = new Date(year, month - 1, 1);
+    const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
     
-    const [currentMonthTransactions, lastMonthTransactions, allTransactions] = await Promise.all([
+    // Get previous month for comparison
+    const prevMonthStart = new Date(year, month - 2, 1);
+    const prevMonthEnd = new Date(year, month - 1, 0, 23, 59, 59, 999);
+    
+    const [selectedMonthTransactions, prevMonthTransactions, allTransactions] = await Promise.all([
       Transaction.find({ 
         userId, 
         date: { $gte: startOfMonth, $lte: endOfMonth } 
       }),
       Transaction.find({ 
         userId, 
-        date: { $gte: lastMonthStart, $lte: lastMonthEnd } 
+        date: { $gte: prevMonthStart, $lte: prevMonthEnd } 
       }),
       Transaction.find({ userId })
     ]);
     
-    // Calculate current month spending
-    const currentMonthSpending = currentMonthTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-    const lastMonthSpending = lastMonthTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+    // Calculate selected month spending
+    const selectedMonthSpending = selectedMonthTransactions.reduce((sum, tx) => sum + tx.amount, 0);
+    const prevMonthSpending = prevMonthTransactions.reduce((sum, tx) => sum + tx.amount, 0);
     
-    // Get user's monthly budget
-    const currentMonth = currentDate.getFullYear() + '-' + String(currentDate.getMonth() + 1).padStart(2, '0');
-    
-    let budget = await UserBudget.findOne({ userId });
-    if (!budget || budget.currentMonth !== currentMonth) {
-      if (!budget) {
-        // Create default budget if none exists
-        budget = new UserBudget({
-          userId,
-          monthlyBudget: 0, // Default budget
-          currentMonth: currentMonth
-        });
-        await budget.save();
-      } else {
-        // Update budget for new month
-        budget.currentMonth = currentMonth;
-        await budget.save();
-      }
+    // Get user's monthly budget for selected month
+    let budget = await UserBudget.findOne({ userId, currentMonth: selectedMonth });
+    if (!budget) {
+      budget = {
+        monthlyBudget: 0,
+        currentMonth: selectedMonth
+      };
     }
     
-    // Calculate total balance (monthly budget - current month expenses)
-    const currentMonthExpenses = currentMonthTransactions.reduce((sum, tx) => sum + tx.amount, 0);
-    const totalBalance = Math.max(0, budget.monthlyBudget - currentMonthExpenses);
+    // Calculate total balance (monthly budget - selected month expenses)
+    const totalBalance = Math.max(0, budget.monthlyBudget - selectedMonthSpending);
     
     // Calculate percentage changes
-    const spendingChange = lastMonthSpending > 0 
-      ? ((currentMonthSpending - lastMonthSpending) / lastMonthSpending) * 100 
+    const spendingChange = prevMonthSpending > 0 
+      ? ((selectedMonthSpending - prevMonthSpending) / prevMonthSpending) * 100 
       : 0;
     
     res.json({
       totalBalance: Math.max(0, totalBalance),
-      monthlySpending: currentMonthSpending,
+      monthlySpending: selectedMonthSpending,
       spendingChange: Math.round(spendingChange * 100) / 100,
       totalTransactions: allTransactions.length
     });
@@ -193,13 +200,22 @@ router.get('/monthly-spending', verifyToken, async (req, res) => {
   }
 });
 
-// Get category breakdown for pie chart
+// Get category breakdown for pie chart (optionally filtered by month)
+// GET /transactions/category-breakdown?month=2024-12
 router.get('/category-breakdown', verifyToken, async (req, res) => {
   try {
     const userId = req.user.id;
-    const currentDate = new Date();
-    const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-    const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+    
+    // Get selected month or default to current month
+    let selectedMonth = req.query.month;
+    if (!selectedMonth) {
+      const currentDate = new Date();
+      selectedMonth = currentDate.getFullYear() + '-' + String(currentDate.getMonth() + 1).padStart(2, '0');
+    }
+    
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const startOfMonth = new Date(year, month - 1, 1);
+    const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
     
     const transactions = await Transaction.find({
       userId,

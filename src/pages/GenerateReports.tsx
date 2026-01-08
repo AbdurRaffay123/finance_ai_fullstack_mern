@@ -13,8 +13,10 @@ import {
   fetchReports,
   generateReport,
 } from '../api';
+import { useMonth } from '../contexts/MonthContext';
 
 const GenerateReports = () => {
+  const { selectedMonth } = useMonth();
   const [selectedReport, setSelectedReport] = useState('monthly');
   const [dateRange, setDateRange] = useState({ start: '', end: '' });
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -46,7 +48,15 @@ const GenerateReports = () => {
   useEffect(() => {
     loadCategories();
     loadRecentReports();
-  }, []);
+    // Set default date range to selected month
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0); // Last day of the month
+    setDateRange({
+      start: startDate.toISOString().split('T')[0],
+      end: endDate.toISOString().split('T')[0]
+    });
+  }, [selectedMonth]);
 
 const loadCategories = async () => {
   try {

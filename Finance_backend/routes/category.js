@@ -21,13 +21,25 @@ const verifyToken = (req, res, next) => {
 
 // Add a category
 router.post('/', verifyToken, async (req, res) => {
-  const { name, color, budget } = req.body;
+  const { name, color, budget, month } = req.body;
   try {
+    // Determine the month for this category
+    let currentMonth;
+    if (month) {
+      // Use provided month (from selectedMonth in frontend)
+      currentMonth = month;
+    } else {
+      // Default to current month if not provided
+      const now = new Date();
+      currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    }
+
     const newCategory = new Category({
       name,
       color,
       budget,
       userId: req.user.id,
+      currentMonth,
     });
 
     await newCategory.save();
@@ -38,10 +50,34 @@ router.post('/', verifyToken, async (req, res) => {
   }
 });
 
-// Get all categories for user
+// Get all categories for user (optionally filtered by month)
+// GET /categories?month=2024-12
 router.get('/', verifyToken, async (req, res) => {
   try {
-    const categories = await Category.find({ userId: req.user.id });
+    let query = { userId: req.user.id };
+    
+    // If month parameter is provided, filter by currentMonth field
+    // For backward compatibility, also check createdAt if currentMonth doesn't exist or is empty
+    if (req.query.month) {
+      const [year, month] = req.query.month.split('-').map(Number);
+      const startOfMonth = new Date(year, month - 1, 1);
+      const endOfMonth = new Date(year, month, 0, 23, 59, 59, 999);
+      
+      // Filter by currentMonth if it exists and matches, otherwise fall back to createdAt
+      query.$or = [
+        { currentMonth: req.query.month },
+        { 
+          $or: [
+            { currentMonth: { $exists: false } },
+            { currentMonth: null },
+            { currentMonth: '' }
+          ],
+          createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+        }
+      ];
+    }
+    
+    const categories = await Category.find(query).sort({ createdAt: -1 });
     res.json(categories);
   } catch (err) {
     res.status(500).json({ message: 'Error retrieving categories' });

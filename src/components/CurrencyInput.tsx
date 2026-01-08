@@ -44,7 +44,28 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(({
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (onChange) {
       // Get the input value (in current currency)
-      const inputValue = parseFloat(e.target.value) || 0;
+      const inputValueStr = e.target.value.trim();
+      
+      // If input is empty, pass empty string (parent component should handle as undefined)
+      if (inputValueStr === '') {
+        const syntheticEvent = {
+          ...e,
+          target: {
+            ...e.target,
+            value: '',
+            name: e.target.name,
+          },
+        } as React.ChangeEvent<HTMLInputElement>;
+        onChange(syntheticEvent);
+        return;
+      }
+      
+      const inputValue = parseFloat(inputValueStr);
+      
+      // If not a valid number, don't convert
+      if (isNaN(inputValue)) {
+        return;
+      }
       
       // Convert from current currency back to PKR
       const valueInPKR = convertToPKR(inputValue, currentCurrency.code);
@@ -63,9 +84,11 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(({
   };
 
   // Format the display value
-  const formattedDisplayValue = displayValue !== undefined
-    ? displayValue.toFixed(2)
-    : props.value as string;
+  // If valueInPKR is undefined, 0, or null, show empty string (not "0.00")
+  // This allows the placeholder "0.00" to be visible
+  const formattedDisplayValue = (valueInPKR !== undefined && valueInPKR !== null && valueInPKR !== 0)
+    ? convertToCurrentCurrency(valueInPKR).toFixed(2)
+    : (props.value !== undefined ? props.value : '');
 
   return (
     <Input

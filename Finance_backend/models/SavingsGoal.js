@@ -7,6 +7,11 @@ const savingsGoalSchema = new mongoose.Schema({
   deadline: { type: Date, required: true },
   category: { type: String, required: true },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  currentMonth: { 
+    type: String, // Format: "YYYY-MM" (e.g., "2024-12")
+    required: false, // Optional for backward compatibility
+    comment: 'Month when goal was created. Used for filtering goals by month.'
+  },
 }, { timestamps: true });
 
 const SavingsGoal = mongoose.model('SavingsGoal', savingsGoalSchema);

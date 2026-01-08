@@ -1,6 +1,7 @@
 // routes/budget.js
 
 const express = require('express');
+const mongoose = require('mongoose');
 const UserBudget = require('../models/UserBudget');
 const jwt = require('jsonwebtoken');
 const { validateMonthYear, getCurrentMonth, formatMonthYear } = require('../utils/budgetValidator');
@@ -74,6 +75,13 @@ router.put('/', verifyToken, async (req, res) => {
   try {
     const { monthlyBudget, month } = req.body;
     
+    console.log('Budget update request:', {
+      userId: req.user.id,
+      monthlyBudget,
+      month,
+      body: req.body
+    });
+    
     // Validate budget amount
     if (monthlyBudget === undefined || monthlyBudget === null) {
       return res.status(400).json({ message: 'Budget amount is required' });
@@ -86,20 +94,32 @@ router.put('/', verifyToken, async (req, res) => {
     // Determine target month (use provided month or default to current month)
     const targetMonth = month || getCurrentMonth();
     
+    console.log('Target month:', targetMonth);
+    
     // Validate month/year selection
     const monthValidation = validateMonthYear(targetMonth);
     if (!monthValidation.isValid) {
+      console.log('Month validation failed:', monthValidation.error);
       return res.status(400).json({ 
         message: monthValidation.error,
         field: 'month'
       });
     }
     
+    console.log('Month validation passed');
+    
+    // Convert userId to ObjectId if it's a string
+    const userId = mongoose.Types.ObjectId.isValid(req.user.id) 
+      ? new mongoose.Types.ObjectId(req.user.id) 
+      : req.user.id;
+    
+    console.log('Using userId:', userId);
+    
     // Use findOneAndUpdate with upsert: true for atomic create/update
     // This prevents race conditions and duplicate key errors
     const budget = await UserBudget.findOneAndUpdate(
       { 
-        userId: req.user.id,
+        userId: userId,
         currentMonth: targetMonth
       },
       { 
@@ -108,7 +128,7 @@ router.put('/', verifyToken, async (req, res) => {
           updatedAt: new Date()
         },
         $setOnInsert: { 
-          userId: req.user.id,
+          userId: userId,
           currentMonth: targetMonth,
           createdAt: new Date()
         }
@@ -120,10 +140,38 @@ router.put('/', verifyToken, async (req, res) => {
       }
     );
     
+    console.log('Budget saved successfully:', budget._id);
     res.json(budget);
   } catch (err) {
     console.error('Error updating budget:', err);
-    res.status(500).json({ message: 'Error updating budget' });
+    console.error('Error details:', {
+      message: err.message,
+      name: err.name,
+      code: err.code,
+      stack: err.stack
+    });
+    
+    // Provide more detailed error message
+    let errorMessage = 'Error updating budget';
+    if (err.code === 11000) {
+      // Check if it's a duplicate key error
+      if (err.keyPattern && err.keyPattern.userId && !err.keyPattern.currentMonth) {
+        // This means there's a unique index on userId alone (should not happen)
+        errorMessage = 'Database configuration error: Please contact support. Error: Duplicate user budget constraint.';
+        console.error('⚠️  CRITICAL: Unique index on userId alone detected! Run fix_budget_indexes.js');
+      } else {
+        errorMessage = 'A budget already exists for this month. Please update the existing budget instead.';
+      }
+    } else if (err.name === 'ValidationError') {
+      errorMessage = `Validation error: ${err.message}`;
+    } else if (err.message) {
+      errorMessage = err.message;
+    }
+    
+    res.status(500).json({ 
+      message: errorMessage,
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
   }
 });
 

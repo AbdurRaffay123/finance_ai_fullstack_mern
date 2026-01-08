@@ -21,9 +21,11 @@ import {
   Zap
 } from 'lucide-react';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useMonth } from '../contexts/MonthContext';
 
 const Predictions = () => {
   const { formatCurrency, convertToCurrentCurrency } = useCurrency();
+  const { selectedMonth } = useMonth();
   const [formData, setFormData] = useState<any>(null);
   const [predictions, setPredictions] = useState<Record<string, number> | null>(null);
   const [loading, setLoading] = useState(false);
@@ -112,12 +114,12 @@ const Predictions = () => {
       setMissingFields([]);
       setPredictions(null);
 
-      // Fetch all required data - using current month budget only
+      // Fetch all required data - using selected month
       const [transactions, categories, budget, savingsGoals, userSettings] = await Promise.all([
-        fetchTransactions(),
-        fetchCategories(),
-        getBudget(), // Current month budget only - no month parameter
-        fetchSavingsGoals(),
+        fetchTransactions(selectedMonth), // Use selected month
+        fetchCategories(selectedMonth), // Filter by selected month
+        getBudget(selectedMonth), // Use selected month budget
+        fetchSavingsGoals(selectedMonth), // Filter by selected month
         fetchUserSettings().catch(() => null), // Optional
       ]);
 

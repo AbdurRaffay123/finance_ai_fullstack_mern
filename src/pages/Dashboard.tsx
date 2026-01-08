@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useMonth } from '../contexts/MonthContext';
 import {
   AreaChart,
   Area,
@@ -80,6 +81,7 @@ interface Budget {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { formatCurrency, convertToCurrentCurrency } = useCurrency();
+  const { selectedMonth } = useMonth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -99,7 +101,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     fetchDashboardData();
-  }, []);
+  }, [selectedMonth]); // Refetch when month changes
 
   // Convert amounts to current currency when data or currency changes
   useEffect(() => {
@@ -161,15 +163,15 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
       
-      // Fetch current month budget only (no month parameter = current month)
+      // Fetch data for selected month
       const [statsData, monthlyData, transactionCategoryData, goalsData, transactionsData, budgetData, categoriesData] = await Promise.all([
-        getDashboardStats(),
+        getDashboardStats(selectedMonth),
         getMonthlySpending(),
-        getCategoryBreakdown(),
-        fetchSavingsGoals(),
-        fetchTransactions(),
-        getBudget(), // Current month budget only - no month parameter
-        fetchCategories() // Fetch user's expense categories
+        getCategoryBreakdown(selectedMonth),
+        fetchSavingsGoals(selectedMonth), // Filter by selected month
+        fetchTransactions(selectedMonth),
+        getBudget(selectedMonth), // Budget for selected month
+        fetchCategories(selectedMonth) // Fetch categories for selected month
       ]);
       
       setStats(statsData);

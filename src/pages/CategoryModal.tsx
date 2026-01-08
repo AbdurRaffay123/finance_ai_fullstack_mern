@@ -99,7 +99,7 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
           </div>
           <CurrencyInput
             label="Monthly Budget"
-            valueInPKR={budget !== '' ? (typeof budget === 'number' ? budget : parseFloat(budget.toString())) : 0}
+            valueInPKR={budget !== '' ? (typeof budget === 'number' ? budget : parseFloat(budget.toString())) : undefined}
             onChange={(e) => {
               const value = e.target.value;
               setBudget(value === '' ? '' : parseFloat(value));
