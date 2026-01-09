@@ -163,15 +163,18 @@ const Dashboard = () => {
       setLoading(true);
       setError(null);
       
-      // Fetch data for selected month
+      // Check if "All" is selected
+      const isAllMonths = selectedMonth === 'all';
+      
+      // Fetch data - if "all" is selected, don't pass month parameter (fetch all data)
       const [statsData, monthlyData, transactionCategoryData, goalsData, transactionsData, budgetData, categoriesData] = await Promise.all([
-        getDashboardStats(selectedMonth),
-        getMonthlySpending(),
-        getCategoryBreakdown(selectedMonth),
-        fetchSavingsGoals(selectedMonth), // Filter by selected month
-        fetchTransactions(selectedMonth),
-        getBudget(selectedMonth), // Budget for selected month
-        fetchCategories(selectedMonth) // Fetch categories for selected month
+        isAllMonths ? getDashboardStats() : getDashboardStats(selectedMonth), // No month = all data
+        getMonthlySpending(), // This already returns all months data
+        isAllMonths ? getCategoryBreakdown() : getCategoryBreakdown(selectedMonth), // No month = all data
+        isAllMonths ? fetchSavingsGoals() : fetchSavingsGoals(selectedMonth), // No month = all goals
+        isAllMonths ? fetchTransactions() : fetchTransactions(selectedMonth), // No month = all transactions
+        isAllMonths ? getBudget() : getBudget(selectedMonth), // No month = current month budget (or handle differently)
+        isAllMonths ? fetchCategories() : fetchCategories(selectedMonth) // No month = all categories
       ]);
       
       setStats(statsData);
@@ -346,7 +349,9 @@ const Dashboard = () => {
 
           <div className="card p-6 animate-fadeIn">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-medium text-secondary-600">Monthly Spending</h3>
+              <h3 className="text-sm font-medium text-secondary-600">
+                {selectedMonth === 'all' ? 'Total Spending' : 'Monthly Spending'}
+              </h3>
               {convertedStats && convertedStats.spendingChange < 0 ? (
                 <ArrowDownRight className="w-5 h-5 text-primary-500" />
               ) : (
@@ -359,7 +364,10 @@ const Dashboard = () => {
             <p className={`text-sm mt-1 ${
               convertedStats && convertedStats.spendingChange < 0 ? 'text-primary-600' : 'text-accent-600'
             }`}>
-              {stats ? `${stats.spendingChange > 0 ? '+' : ''}${stats.spendingChange.toFixed(1)}% from last month` : 'No data'}
+              {selectedMonth === 'all' 
+                ? (stats ? 'All-time spending' : 'No data')
+                : (stats ? `${stats.spendingChange > 0 ? '+' : ''}${stats.spendingChange.toFixed(1)}% from last month` : 'No data')
+              }
             </p>
           </div>
 

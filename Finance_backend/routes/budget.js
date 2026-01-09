@@ -27,15 +27,50 @@ const verifyToken = (req, res, next) => {
 // Get budget for user (current month by default, or specific month if provided)
 // GET /api/budget - Returns current month budget (used by Dashboard, Predictions, AI Recommendations)
 // GET /api/budget?month=2024-12 - Returns budget for specific month (used by Budget Management page)
+// GET /api/budget?month=all - Returns sum of all budgets from current and previous months
 router.get('/', verifyToken, async (req, res) => {
   try {
+    const requestedMonth = req.query.month;
+    const isAllMonths = !requestedMonth || requestedMonth === 'all';
+    
+    if (isAllMonths) {
+      // Aggregate budgets from all current and previous months (not future)
+      const now = new Date();
+      const currentMonthString = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      
+      // Get all budgets
+      const allBudgets = await UserBudget.find({ userId: req.user.id });
+      
+      // Filter to only include budgets from current and previous months
+      const validBudgets = allBudgets.filter(budget => {
+        if (!budget.currentMonth) return false;
+        const [year, month] = budget.currentMonth.split('-').map(Number);
+        const budgetDate = new Date(year, month - 1, 1);
+        return budgetDate <= currentMonthStart;
+      });
+      
+      // Sum all budgets
+      const totalBudget = validBudgets.reduce((sum, budget) => sum + budget.monthlyBudget, 0);
+      
+      return res.json({
+        _id: null,
+        userId: req.user.id,
+        monthlyBudget: totalBudget,
+        currentMonth: 'all',
+        createdAt: null,
+        updatedAt: null,
+      });
+    }
+    
+    // Single month logic (existing code)
     // Default to current month if no month parameter provided
     // This ensures Dashboard, Predictions, and AI Recommendations always use current month budget
-    const requestedMonth = req.query.month || getCurrentMonth();
+    const monthToUse = requestedMonth || getCurrentMonth();
     
     // Validate month format if provided
-    if (req.query.month) {
-      const validation = validateMonthYear(requestedMonth);
+    if (requestedMonth) {
+      const validation = validateMonthYear(monthToUse);
       if (!validation.isValid) {
         return res.status(400).json({ message: validation.error });
       }
@@ -44,7 +79,7 @@ router.get('/', verifyToken, async (req, res) => {
     // Find budget for requested month
     let budget = await UserBudget.findOne({ 
       userId: req.user.id,
-      currentMonth: requestedMonth
+      currentMonth: monthToUse
     });
     
     // If no budget exists for requested month, return default (don't auto-create)
@@ -54,7 +89,7 @@ router.get('/', verifyToken, async (req, res) => {
         _id: null,
         userId: req.user.id,
         monthlyBudget: 0,
-        currentMonth: requestedMonth,
+        currentMonth: monthToUse,
         createdAt: null,
         updatedAt: null,
       });

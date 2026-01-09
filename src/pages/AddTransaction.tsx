@@ -1,38 +1,43 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Layout from '../components/Layout';
 import { Calendar, Tag, FileText } from 'lucide-react';
-import api from '../api';
+import api, { fetchCategories } from '../api';
 import Input from '../components/Input';
 import CurrencyInput from '../components/CurrencyInput';
-
-// Static list of transaction categories (independent from expenses)
-const TRANSACTION_CATEGORIES = [
-  'Food & Dining',
-  'Transportation',
-  'Shopping',
-  'Entertainment',
-  'Bills & Utilities',
-  'Healthcare',
-  'Education',
-  'Travel',
-  'Groceries',
-  'Income',
-  'Gifts & Donations',
-  'Personal Care',
-  'Home & Garden',
-  'Insurance',
-  'Others'
-];
+import { useMonth } from '../contexts/MonthContext';
 
 const AddTransaction = () => {
   const navigate = useNavigate();
+  const { selectedMonth } = useMonth();
+  const [categories, setCategories] = useState<string[]>([]);
   const [transaction, setTransaction] = useState({
     amount: '',
     category: '',
     date: new Date().toISOString().split('T')[0], // default today's date
     description: '', // Optional description field
   });
+
+  // Load categories from expense categories (linked with expenses table)
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categoryData = await fetchCategories(selectedMonth);
+        // Extract unique category names
+        const categoryNames = [...new Set(categoryData.map((cat: any) => cat.name))];
+        setCategories(categoryNames.sort());
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        // Fallback to default categories if API fails
+        setCategories([
+          'Income', 'Groceries', 'Transport', 'Eating Out', 'Entertainment',
+          'Utilities', 'Miscellaneous', 'Healthcare', 'Education', 'Insurance',
+          'Rent', 'Loan Repayment'
+        ]);
+      }
+    };
+    loadCategories();
+  }, [selectedMonth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,9 +50,20 @@ const AddTransaction = () => {
     try {
       const token = localStorage.getItem('authToken');
 
+      // Convert amount: expenses should be negative, income should be positive
+      let amount = parseFloat(transaction.amount);
+      const isIncome = transaction.category.toLowerCase() === 'income';
+      if (!isIncome) {
+        // For expense categories, store as negative
+        amount = -Math.abs(amount);
+      } else {
+        // For income, store as positive
+        amount = Math.abs(amount);
+      }
+
       // Prepare request data
       const requestData: any = {
-        amount: parseFloat(transaction.amount),
+        amount: amount,
         category: transaction.category,
         date: new Date(transaction.date), // Convert string to Date object
       };
@@ -126,7 +142,7 @@ const AddTransaction = () => {
                 style={{ minHeight: '2.5rem' }}
               >
                 <option value="">Select a category</option>
-                {TRANSACTION_CATEGORIES.map((cat) => (
+                {categories.map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
                   </option>

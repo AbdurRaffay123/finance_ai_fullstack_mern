@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import { Calendar, ChevronDown } from 'lucide-react';
 import { useMonth } from '../contexts/MonthContext';
 
@@ -11,7 +12,11 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
   className = '', 
   showLabel = true 
 }) => {
+  const location = useLocation();
   const { selectedMonth, setSelectedMonth, getCurrentMonth, formatMonthDisplay, isCurrentMonth } = useMonth();
+  
+  // Check if we're on Dashboard page
+  const isDashboard = location.pathname === '/dashboard';
 
   // Generate list of available months (current month and previous 12 months)
   const getAvailableMonths = (): string[] => {
@@ -31,6 +36,27 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
 
   const availableMonths = getAvailableMonths();
   const currentMonth = getCurrentMonth();
+  
+  // Handle "All" selection - only allow on Dashboard
+  const handleMonthChange = (value: string) => {
+    if (value === 'all') {
+      if (isDashboard) {
+        setSelectedMonth('all');
+      } else {
+        // If not on Dashboard, reset to current month
+        setSelectedMonth(getCurrentMonth());
+      }
+    } else {
+      setSelectedMonth(value);
+    }
+  };
+  
+  // Reset "all" to current month if not on Dashboard
+  React.useEffect(() => {
+    if (!isDashboard && selectedMonth === 'all') {
+      setSelectedMonth(getCurrentMonth());
+    }
+  }, [isDashboard, selectedMonth, setSelectedMonth]);
 
   return (
     <div className={`flex items-center gap-3 ${className}`}>
@@ -43,9 +69,13 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
       <div className="relative">
         <select
           value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
+          onChange={(e) => handleMonthChange(e.target.value)}
           className="appearance-none bg-white border border-primary-300 rounded-lg px-4 py-2 pr-10 text-sm font-medium text-primary-900 hover:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent cursor-pointer transition-colors"
         >
+          {/* Show "All" option only on Dashboard */}
+          {isDashboard && (
+            <option value="all">All Months</option>
+          )}
           {availableMonths.map((month) => (
             <option key={month} value={month}>
               {formatMonthDisplay(month)}
@@ -55,15 +85,20 @@ const MonthSelector: React.FC<MonthSelectorProps> = ({
         </select>
         <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-primary-600 pointer-events-none" />
       </div>
-      {isCurrentMonth(selectedMonth) && (
+      {selectedMonth === 'all' && isDashboard ? (
+        <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
+          All Months
+        </span>
+      ) : isCurrentMonth(selectedMonth) && selectedMonth !== 'all' ? (
         <span className="px-2 py-1 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
           Current Month
         </span>
-      )}
+      ) : null}
     </div>
   );
 };
 
 export default MonthSelector;
+
 
 

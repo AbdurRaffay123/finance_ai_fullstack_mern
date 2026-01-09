@@ -63,28 +63,56 @@ const CategoryModal: React.FC<CategoryModalProps> = ({
         </h2>
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="category-input" className="block text-sm font-medium text-gray-700 mb-2">
               Category <span className="text-red-500">*</span>
               <span className="text-xs text-gray-500 block mt-1 font-normal">
-                Select a category required by the prediction system
+                Type a category name or select from the list
               </span>
             </label>
-            <select
-              ref={categorySelectRef}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            >
-              <option value="">Select a category</option>
-              {PREDICTION_CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat.replace(/_/g, ' ')}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <input
+                ref={categorySelectRef}
+                id="category-input"
+                type="text"
+                list="category-options"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 py-2 px-3"
+                value={name || ''}
+                onChange={(e) => {
+                  // Allow user to type freely
+                  setName(e.target.value);
+                }}
+                onBlur={(e) => {
+                  // When user leaves the field, try to match with prediction categories
+                  const inputValue = e.target.value.trim();
+                  if (inputValue) {
+                    // Normalize: convert spaces to underscores for matching
+                    const normalizedName = inputValue.replace(/\s+/g, '_');
+                    // Find matching category in PREDICTION_CATEGORIES (case-insensitive)
+                    const matchedCategory = PREDICTION_CATEGORIES.find(
+                      cat => cat.toLowerCase() === normalizedName.toLowerCase()
+                    );
+                    // If exact match found, use the prediction category format
+                    if (matchedCategory) {
+                      setName(matchedCategory.replace(/_/g, ' '));
+                    } else {
+                      // Keep user's input as-is
+                      setName(inputValue);
+                    }
+                  }
+                }}
+                placeholder="Type or select a category"
+                required
+              />
+              <datalist id="category-options">
+                {PREDICTION_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat.replace(/_/g, ' ')}>
+                    {cat.replace(/_/g, ' ')}
+                  </option>
+                ))}
+              </datalist>
+            </div>
             <p className="text-xs text-blue-600 mt-2">
-              💡 These categories are linked to the prediction system. The category name will be used for AI predictions.
+              💡 You can type your own category name or select from the list. Categories matching the prediction system will be used for AI predictions.
             </p>
           </div>
           <div>

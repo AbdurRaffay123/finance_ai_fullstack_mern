@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { convertToPKR } from '../utils/currencyUtils';
 import Input from './Input';
@@ -33,21 +33,47 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(({
   valueInPKR,
   showSymbol = true,
   onChange,
+  onBlur,
   ...props
 }, ref) => {
   const { currentCurrency, formatCurrency, convertToCurrentCurrency } = useCurrency();
+  
+  // Track the raw input value (what user is typing)
+  const [rawInputValue, setRawInputValue] = useState<string>('');
+  const [isFocused, setIsFocused] = useState(false);
 
-  // Convert PKR value to current currency for display
-  const displayValue = valueInPKR !== undefined ? convertToCurrentCurrency(valueInPKR) : undefined;
+  // Initialize rawInputValue when component mounts
+  useEffect(() => {
+    if (valueInPKR !== undefined && valueInPKR !== null && valueInPKR !== 0) {
+      const displayValue = convertToCurrentCurrency(valueInPKR);
+      setRawInputValue(displayValue.toString());
+    } else {
+      setRawInputValue('');
+    }
+  }, []); // Only run on mount
 
-  // Handle input changes by converting back to PKR
+  // Update rawInputValue when valueInPKR changes externally (but not while user is typing)
+  useEffect(() => {
+    if (!isFocused) {
+      if (valueInPKR !== undefined && valueInPKR !== null && valueInPKR !== 0) {
+        const displayValue = convertToCurrentCurrency(valueInPKR);
+        setRawInputValue(displayValue.toString());
+      } else {
+        setRawInputValue('');
+      }
+    }
+  }, [valueInPKR, isFocused, convertToCurrentCurrency]);
+
+  // Handle input changes - allow free typing without auto-formatting
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValueStr = e.target.value;
+    
+    // Allow user to type freely (including partial numbers like "1", "1.", "1.5")
+    setRawInputValue(inputValueStr);
+    
     if (onChange) {
-      // Get the input value (in current currency)
-      const inputValueStr = e.target.value.trim();
-      
-      // If input is empty, pass empty string (parent component should handle as undefined)
-      if (inputValueStr === '') {
+      // If input is empty, pass empty string
+      if (inputValueStr.trim() === '') {
         const syntheticEvent = {
           ...e,
           target: {
@@ -60,9 +86,10 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(({
         return;
       }
       
+      // Parse the input value
       const inputValue = parseFloat(inputValueStr);
       
-      // If not a valid number, don't convert
+      // If not a valid number, don't convert (but still allow typing)
       if (isNaN(inputValue)) {
         return;
       }
@@ -83,27 +110,57 @@ const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(({
     }
   };
 
-  // Format the display value
-  // If valueInPKR is undefined, 0, or null, show empty string (not "0.00")
-  // This allows the placeholder "0.00" to be visible
-  const formattedDisplayValue = (valueInPKR !== undefined && valueInPKR !== null && valueInPKR !== 0)
-    ? convertToCurrentCurrency(valueInPKR).toFixed(2)
-    : (props.value !== undefined ? props.value : '');
+  // Handle blur - format the value when user leaves the field
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    setIsFocused(false);
+    
+    // Format the value on blur
+    const inputValueStr = rawInputValue.trim();
+    if (inputValueStr === '') {
+      setRawInputValue('');
+    } else {
+      const inputValue = parseFloat(inputValueStr);
+      if (!isNaN(inputValue)) {
+        // Format to 2 decimal places on blur
+        const formatted = inputValue.toFixed(2);
+        setRawInputValue(formatted);
+      }
+    }
+    
+    if (onBlur) {
+      onBlur(e);
+    }
+  };
+
+  // Handle focus - track that user is typing
+  const handleFocus = () => {
+    setIsFocused(true);
+  };
+
+  // Determine what to display
+  // While focused: show raw input (what user is typing)
+  // While not focused: show formatted value or empty
+  const displayValue = isFocused 
+    ? rawInputValue 
+    : (valueInPKR !== undefined && valueInPKR !== null && valueInPKR !== 0)
+      ? convertToCurrentCurrency(valueInPKR).toFixed(2)
+      : '';
 
   return (
     <Input
       ref={ref}
-      type="number"
-      step="0.01"
-      min="0"
+      type="text"
+      inputMode="decimal"
       size={size}
       error={error}
       containerClassName={containerClassName}
       label={label}
       helperText={helperText}
       prefix={showSymbol ? currentCurrency.symbol : undefined}
-      value={formattedDisplayValue}
+      value={displayValue}
       onChange={handleChange}
+      onBlur={handleBlur}
+      onFocus={handleFocus}
       placeholder="0.00"
       {...props}
     />

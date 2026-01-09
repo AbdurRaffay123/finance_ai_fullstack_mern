@@ -30,9 +30,8 @@ export const MonthProvider: React.FC<MonthProviderProps> = ({ children }) => {
   useEffect(() => {
     const savedMonth = localStorage.getItem('selectedMonth');
     if (savedMonth) {
-      // Validate saved month format
-      const monthRegex = /^\d{4}-\d{2}$/;
-      if (monthRegex.test(savedMonth)) {
+      // Allow "all" or valid month format
+      if (savedMonth === 'all' || /^\d{4}-\d{2}$/.test(savedMonth)) {
         setSelectedMonthState(savedMonth);
       }
     }
@@ -45,6 +44,7 @@ export const MonthProvider: React.FC<MonthProviderProps> = ({ children }) => {
 
   const formatMonthDisplay = (month: string): string => {
     if (!month) return '';
+    if (month === 'all') return 'All Months';
     const [year, monthNum] = month.split('-').map(Number);
     const date = new Date(year, monthNum - 1, 1);
     return date.toLocaleDateString('en-US', { 
@@ -83,5 +83,6 @@ export const useMonth = (): MonthContextType => {
   }
   return context;
 };
+
 
 

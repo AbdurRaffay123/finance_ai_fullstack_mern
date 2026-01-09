@@ -47,8 +47,9 @@ export const updateCategory = (id, category) => api.put(`/categories/${id}`, cat
 export const deleteCategory = (id) => api.delete(`/categories/${id}`).then(res => res.data);
 
 // Patch update spentAmount (increment) for a category
-export const updateCategorySpentAmount = (id, amount) =>
-  api.patch(`/categories/${id}/spentAmount`, { amount }).then(res => res.data);
+// For default categories, pass additional data: { name, month }
+export const updateCategorySpentAmount = (id, amount, additionalData = {}) =>
+  api.patch(`/categories/${id}/spentAmount`, { amount, ...additionalData }).then(res => res.data);
 
 
 // CRUD for savings goals

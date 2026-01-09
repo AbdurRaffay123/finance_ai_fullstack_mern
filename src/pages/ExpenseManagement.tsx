@@ -19,6 +19,8 @@ interface Category {
   color: string;
   budget: number;
   spentAmount?: number; // use spentAmount consistently
+  isDefault?: boolean; // Flag for default categories
+  currentMonth?: string; // Month this category belongs to
 }
 
 const ExpenseManagement: React.FC = () => {
@@ -92,7 +94,16 @@ const ExpenseManagement: React.FC = () => {
       }
       try {
         if (categoryId) {
-          await updateCategory(categoryId, { name, color, budget });
+          // Check if it's a default category (virtual ID)
+          const isDefaultCategory = categoryId.startsWith('default-');
+          
+          if (isDefaultCategory) {
+            // For default categories, pass month to create/update for that month
+            await updateCategory(categoryId, { name, color, budget, month: selectedMonth });
+          } else {
+            // Regular category update (month-specific)
+            await updateCategory(categoryId, { name, color, budget, month: selectedMonth });
+          }
         } else {
           // Pass selectedMonth when creating new category
           await addCategory({ name, color, budget }, selectedMonth);
@@ -126,8 +137,27 @@ const ExpenseManagement: React.FC = () => {
     try {
       if (!addingSpentAmountForId) return;
 
+      // Find the category to get its name (needed for default categories)
+      const category = categories.find(cat => cat._id === addingSpentAmountForId);
+      if (!category) {
+        alert('Category not found');
+        return;
+      }
+
+      // Check if it's a default category (virtual ID)
+      const isDefaultCategory = addingSpentAmountForId.startsWith('default-');
+      
       // spentAmountToAdd is already in PKR (converted by CurrencyInput)
-      await updateCategorySpentAmount(addingSpentAmountForId, spentAmountToAdd);
+      // For default categories, we need to pass name and month to create it first
+      if (isDefaultCategory) {
+        await updateCategorySpentAmount(addingSpentAmountForId, spentAmountToAdd, {
+          name: category.name,
+          month: selectedMonth
+        });
+      } else {
+        await updateCategorySpentAmount(addingSpentAmountForId, spentAmountToAdd);
+      }
+      
       await loadCategories();
       closeAddSpentAmount();
     } catch (error) {
@@ -147,8 +177,18 @@ const ExpenseManagement: React.FC = () => {
   // Updated handleDelete to use inline confirmation UI
   const confirmDelete = async (id: string) => {
     try {
+      const category = categories.find(cat => cat._id === id);
+      const isDefaultCategory = id.startsWith('default-') || category?.isDefault;
+      
       await deleteCategory(id);
       setCategoryToDelete(null); // close confirmation UI
+      
+      // Show appropriate message
+      if (isDefaultCategory) {
+        // Default categories are reset, not deleted
+        // The backend will reset values to 0
+      }
+      
       loadCategories();
     } catch (err) {
       console.error('Failed to delete category', err);
